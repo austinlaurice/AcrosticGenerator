@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+    <div class="container-fluid content">
+        <div class="row">
+            <div class="col">
+                <form name="lyrics_condition" method="POST">
+                    {% csrf_token %} 
+                    <div class="form-group">
+                        <label>韻腳(Rhyme)</label>
+                        <select class="form-control" name="rhyme">
+                            {% for rhyme in rhyme_list %}
+                            <option value={{ forloop.counter0 }}>{{ rhyme }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group" >
+                        <label>第一句(The first sentence you want)</label>
+                        <input class="form-control" name="first_sentence" placeholder="ex.你是我眼中的星星">
+                    </div>
+                    <div class="form-group">
+                        <label>發展字(Topic Words):如果想不出第一句，會以發展字為主題生成</label>
+                        <input class="form-control" name="keywords" placeholder="ex. 夜空 星星">
+                    </div>
+                    <div class="form-group">
+                        <label>想隱藏的句子(The sentence you want to embed in the lyrics)</label>
+                        <input class="form-control" name="hidden_sentence" placeholder="ex.我喜歡你">
+                    </div>
+                    <div class="form-group">
+                        <label>每句句子長度(Length of each sentence)</label>
+                        <input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12">
+                    </div>
+                    <div class="form-group">
+                        <label>隱藏規律(Hidden Pattern)</label>
+                        <select class="form-control" name="pattern" onchange="tableShow('pattern_define', this)">
+                            <option value="0">句首(First character of each sentence)</option>
+                            <option value="1">對角線(Diagonal line)</option>
+                            <option value="2">Z</option>
+                            <option value="3">我自己畫(Draw it myself)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" name="pattern_define" id="pattern_define">
+                    </div>
+                    <div class="form-group" style="display: none"> 
+                        <input class="form-control" name="selected_index" id="selected_index">
+                    </div>
+                    <button type="submit" class="btn btn-secondary btn-lg btn-block">提交(Submit)</button>
+                </form>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body">
+                        <p class="card-title">
+                            歌詞結果：
+                            {% if generated_lyrics %}
+                                {{ generated_lyrics }}
+                            {% else %}
+                                目前尚無歌詞
+                            {% endif %}
+                        </p>
+                        <hr></hr>
+                        <p class="card-text">
+                            指定條件：
+                            {% if conditions %}
+                                {{ conditions }}
+                            {% else %}
+                                目前尚無條件
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+
+

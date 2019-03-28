@@ -1,0 +1,30 @@
+body{
+    padding-top: 70px;
+    padding-left: 3%;
+    padding-right: 3%;
+}
+
+table{
+    table-layout: fixed;
+}
+
+td{
+    font-size: 8px;
+    text-align: left;
+}
+
+.content{
+    margin-top: 20px;
+}
+
+.card{
+    margin-left: 5%;
+}
+.card-title{
+    min-height: 250px;
+}
+
+.card-text{
+    min-height: 250px;
+}
+
