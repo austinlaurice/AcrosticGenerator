@@ -4,7 +4,6 @@ import random
 from collections import defaultdict
 import re
 
-# TODO
 def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, pattern, selected_index):
     # rhyme is already done
     line_count = 6
@@ -15,7 +14,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     elif length != None:
         line_count = len(length)
     if not first_sentence:
-        zero_sentence = gen_first_sentence(keywords) # if no keyword then random generate a sentence
+        pass
+        # TODO
+        # zero_sentence = gen_first_sentence(keywords) # if no keyword then random generate a sentence
 
     # Use pattern to decide the condition of each sentence
     # length of each sentence is decided in this section
@@ -48,7 +49,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
         selected_position = defaultdict(list)
         for index in selected_index:
             row, col = index.split('_')
-            selected_position[row].append(col+1)
+            selected_position[int(row)].append(int(col)+1)
         if length:
             ch_count = 0
             for i in range(len(length)):
@@ -83,32 +84,35 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                 condition_count = 0
                 if len(ch_position[row_num]) != 0:
                     condition = ''
-                    for c, p in ch_position:
-                        condition = c + ' ' + p + ' '
+                    for c, p in ch_position[row_num]:
+                        condition = str(c) + ' ' + p + ' '
                         condition_count += 1
                     condition = str(condition_count) + ' ' + condition
                 else:
                     condition = '0 '
                 input_sentence = 'SOS ' + zero_sentence + ' EOS ' + condition + \
                                  '|| ' + rhyme + ' || ' + str(length_row)
+                # TODO
                 # model need to be called by here
-                sentence_now = generate_sentence(input_sentence)
+                # sentence_now = generate_sentence(input_sentence)
             else:
                 sentence_now = first_sentence
         else:
             condition_count = 0
             if len(ch_position[row_num]) != 0:
                 condition = ''
-                for c, p in ch_position:
-                    condition = c + ' ' + p + ' '
+                for c, p in ch_position[row_num]:
+                    condition = str(c) + ' ' + p + ' '
                     condition_count += 1
                 condition = str(condition_count) + ' ' + condition
             else:
                 condition = '0 '
             input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + \
                              '|| ' + rhyme + ' || ' + str(length_row)
+            # TODO
             # model need to be called by here
-            sentence_now = generate_sentence(input_sentence)
+            # sentence_now = generate_sentence(input_sentence)
+        print (input_sentence)
         generated_lyrics.append(sentence_now)
         input_sentence = sentence_now
     return generated_lyrics
@@ -130,15 +134,14 @@ def lyrics(req):
         if length != None:
             length = re.sub('[^0-9;]','', length)
             length = length.split(';')
-        # TODO
 
-        #model_input = gen_model_input(rhyme, first_sentence, keywords, hid_sentence,
-        #                              length, pattern, selected_index)
+        model_input = gen_model_input(rhyme, first_sentence, keywords, hid_sentence,\
+                                      length, pattern, selected_index)
 
 
 
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST,
-                                          # TODO
+                                          # TODO: Frontend
                                           'generated_lyrics': first_sentence})
 
     elif req.method == 'GET':
