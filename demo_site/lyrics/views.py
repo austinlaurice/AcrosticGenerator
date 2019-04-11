@@ -273,7 +273,7 @@ def lyrics(req):
         # print (selected_index)
         if length != None:
             length = re.sub('[^0-9;]','', length)
-            length = length.split(';')
+            length = length.strip(';').split(';')
 
         model_output, ch_position_num = gen_model_input(rhyme, first_sentence, keywords, hid_sentence,\
                                       length, pattern, selected_index)
