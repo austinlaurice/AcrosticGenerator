@@ -1,7 +1,7 @@
 // Draw form according to sentence length
-var coloredForm = new Set();
+var coloredForm = new Array();
 function tableCreate(divID){
-    coloredForm = new Set();
+    coloredForm = new Array();
     var table_div = document.getElementById(divID);
     var tbl = document.createElement('table');
     tbl.classList.add('table');
@@ -100,7 +100,7 @@ function tableShow(divID, element){
     else{
         var clearElement = document.getElementById(divID);
         clearElement.innerHTML = '';
-        coloredForm = new Set();
+        coloredForm = new Array();
         var update_index = document.getElementById('selected_index');
         update_index.value='';
     }
@@ -118,12 +118,12 @@ function changeSlotColor(){
             console.log(row + ',' + col);
             if (item.style.backgroundColor == 'rgb(170, 170, 170)'){
                 item.style.backgroundColor = '#FFFFFF';
-                coloredForm.delete(new_index);
+                coloredForm.splice(coloredForm.indexOf(new_index), 1);
                 //console.log(item.rowIndex);
             }
             else{
                 item.style.backgroundColor = '#AAAAAA';
-                coloredForm.add(new_index);
+                coloredForm.push(new_index);
             }
             var update_index = document.getElementById('selected_index');
             var indexes = Array.from(coloredForm).join(' ');

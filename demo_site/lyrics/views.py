@@ -159,20 +159,22 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     elif pattern == '3':
         # selected_index 0_0 1_0 1_1 need to plus one for col index
         selected_index = selected_index.strip().split(' ')
+        selected_index = [ind.split('_') for ind in selected_index]
+        index_word_bind = list(zip(selected_index, hid_sentence))
         selected_position = defaultdict(list)
-        for index in selected_index:
-            row, col = index.split('_')
-            selected_position[int(row)].append(int(col)+1)
+        for index, word in index_word_bind:
+            row, col = index
+            selected_position[int(row)].append((int(col)+1, word))
         if length:
             ch_count = 0
             for i in range(len(length)):
                 ch_row = []
                 ch_row_num = []
-                position_now = sorted(selected_position[i]) if i in selected_position else None
-                if position_now:
-                    for position in position_now:
-                        ch_row.append((position, hid_sentence[ch_count]))
-                        ch_row_num.append(position)
+                col_word_now = sorted(selected_position[i], key=lambda x: x[0]) if i in selected_position else None
+                if col_word_now:
+                    for col, word in col_word_now:
+                        ch_row.append((col, word))
+                        ch_row_num.append(col)
                         ch_count += 1
                 ch_position.append(ch_row)
                 ch_position_num.append(ch_row_num)
@@ -183,11 +185,11 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
             for i in range(len(length)):
                 ch_row = []
                 ch_row_num = []
-                position_now = sorted(selected_position[i]) if i in selected_position else None
-                if position_now:
-                    for position in position_now:
-                        ch_row.append((position, hid_sentence[ch_count]))
-                        ch_row_num.append(position)
+                col_word_now = sorted(selected_position[i], key=lambda x: x[0]) if i in selected_position else None
+                if col_word_now:
+                    for col, word in col_word_now:
+                        ch_row.append((col, word))
+                        ch_row_num.append(col)
                         ch_count += 1
                 ch_position.append(ch_row)
                 ch_position_num.append(ch_row_num)
