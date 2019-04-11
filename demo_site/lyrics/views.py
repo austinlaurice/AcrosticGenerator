@@ -68,30 +68,33 @@ def gen_first_sentence(keywords=None):
 
 # word match method
 def gen_first_sentence(keywords=None):
-    vocab_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/data/vocab_char.pkl'
     lyrics_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/data/lyrics_char.txt'
-    mapping_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/data/vocab_lyric_mapping'
-    with open(vocab_path, 'rb') as f:
-        vocab = pickle.load(f)
-        inv_vocab = {j:i for i, j in enumerate(vocab)}
     with open(lyrics_path, 'r') as f:
-        lyrics = f.read().splitlines()
-    with open(mapping_path, 'rb') as f:
-        mapping = pickle.load(f)
+        lyrics = f.read().replace(' ', '')
+        lyric_lines = lyrics.splitlines()
     if keywords == None:
         keywords = []
     else:
-        keywords = list(''.join(keywords))
-    L = []
-    for k in keywords:
-        if k in inv_vocab.keys():
-            L += list(mapping[inv_vocab[k]])
-    if len(L) == 0:
-        rand_id = random.randint(0, len(lyrics)-1)
-        return lyrics[rand_id]
+        keywords = ''.join(keywords)
+
+    ngram = len(keywords)
+    match = []
+    while ngram > 0:
+        if len(match) > 0:
+            break
+        start = 0
+        while start+ngram <= len(keywords):
+            word = keywords[start: start+ngram]
+            match += re.findall(r'.*'+word+'.*\n', lyrics)
+            start += 1
+        ngram -= 1
+
+    if len(match) == 0:
+        rand_id = random.randint(0, len(lyric_lines)-1)
+        return lyric_lines[rand_id]
     else:
-        counter = Counter(L)
-        return lyrics[counter.most_common(1)[0][0]]
+        counter = Counter(match)
+        return counter.most_common(1)[0][0].strip()
 
 
 def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, pattern, selected_index):
@@ -260,8 +263,6 @@ def lyrics(req):
         #first_sentence = req.POST['first_sentence'] if req.POST['first_sentence']!='' else None
         first_sentence = None
         keywords = req.POST['keywords']
-        print(keywords)
-        print(type(keywords))
         hid_sentence = req.POST['hidden_sentence'] if req.POST['hidden_sentence'] else None
         length = req.POST['length'] if req.POST['length'] != '' else None
         pattern = req.POST['pattern']
