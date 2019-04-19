@@ -8,7 +8,7 @@
                 <form name="lyrics_condition" method="POST">
                     {% csrf_token %} 
                     <div class="form-group">
-                        <label>韻腳(Rhyme)</label>
+                        <label>Rhyme:</label>
                         <select class="form-control" name="rhyme">
                             {% for rhyme in rhyme_list %}
                             <option value={{ forloop.counter0 }}>{{ rhyme }}</option>
@@ -20,24 +20,24 @@
                         <input class="form-control" name="first_sentence" placeholder="ex.你是我眼中的星星">
                     </div>-->
                     <div class="form-group">
-                        <label>發展字(Topic Words): 歌詞會以發展字為基礎生成(Lyrics will be generated based topic words)</label>
-                        <input class="form-control" name="keywords" placeholder="">
+                        <label>Theme of topic: Lyrics will be generated based topic words</label>
+                        <input class="form-control" name="keywords" value="{{topic}}">
                     </div>
                     <div class="form-group">
-                        <label>想隱藏的句子(The sentence you want to embed in the lyrics)</label>
-                        <input class="form-control" name="hidden_sentence" placeholder="">
+                        <label>The sequence of tokens to be hidden in lyrics</label>
+                        <input class="form-control" name="hidden_sentence" value="{{hidden_sentence}}">
                     </div>
                     <div class="form-group">
-                        <label>每句句子長度(Length of each sentence)</label>
-                        <input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12">
+                        <label>Lengths of the first to the last sentences</label>
+                        <input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length_set}}">
                     </div>
                     <div class="form-group">
-                        <label>隱藏規律(Hidden Pattern)</label>
+                        <label>Hidden Pattern</label>
                         <select class="form-control" name="pattern" onchange="tableShow('pattern_define', this)">
-                            <option value="0">句首(First character of each sentence)</option>
-                            <option value="1">句尾(Last character of each sentence)</option>
-                            <option value="2">對角線(Diagonal line)</option>
-                            <option value="3">我自己畫(Draw it myself)</option>
+                            <option value="0">First character of each sentence</option>
+                            <option value="1">Last character of each sentence</option>
+                            <option value="2">Diagonal line</option>
+                            <option value="3">Draw it myself</option>
                         </select>
                     </div>
                     <div class="form-group" name="pattern_define" id="pattern_define">
@@ -52,7 +52,7 @@
                 <div class="card">
                     <div class="card-body">
                         <p class="card-title">
-                            歌詞結果：<br/>
+                            Result：<br/>
                             {% if generated_lyrics %}
                                 {% for lyrics in generated_lyrics %}
                                     keywords:
@@ -74,17 +74,17 @@
                                     =================================<br/>
                                 {% endfor %}
                             {% else %}
-                                目前尚無歌詞
+                                There's no result for now.
                             {% endif %}
                         </p>
                         <hr></hr>
                         <p class="card-text">
-                            指定條件：<br/>
+                            Conditions set by you：<br/>
                             {% if generated_lyrics %}
-                                隱藏句子(The sentence hidden in the lyrics): {{hidden_sentence}} <br/>
-                                韻腳(Rhyme): {{ rhyme}} <br/>
+                                The sentence hidden in the lyrics: {{hidden_sentence}} <br/>
+                                Rhyme: {{ rhyme}} <br/>
                             {% else %}
-                                目前尚無條件
+                                There's no condition for now.
                             {% endif %}
                         </p>
                     </div>
