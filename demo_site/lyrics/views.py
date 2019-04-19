@@ -253,7 +253,8 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                                                                                .replace('麵', '面')
                                                                                .replace('鞦天', '秋天')
                                                                                .replace('鞦色', '秋色')
-                                                                               .replace('颱', '台'))
+                                                                               .replace('颱', '台')
+                                                                               .replace('纔', '才'))
         #generated_lyrics.append(''.join(output_format))
         input_sentence = sentence_now
     return generated_lyrics, ch_position_num
@@ -265,6 +266,7 @@ def lyrics(req):
         #first_sentence = req.POST['first_sentence'] if req.POST['first_sentence']!='' else None
         first_sentence = None
         keywords = req.POST['keywords']
+        print('keywords', keywords)
         hid_sentence = req.POST['hidden_sentence'] if req.POST['hidden_sentence'] else None
         length = req.POST['length'] if req.POST['length'] != '' else None
         pattern = req.POST['pattern']
@@ -276,12 +278,57 @@ def lyrics(req):
         if length != None:
             length = re.sub('[^0-9;]','', length)
             length = length.strip(';').split(';')
-
-        model_output, ch_position_num = gen_model_input(rhyme, first_sentence, keywords, hid_sentence,\
-                                      length, pattern, selected_index)
-        print (model_output)
         
-        generated_lyrics = list(zip(model_output, ch_position_num))
+        model_output, ch_position_num, keywords_record, rhyme_record = [], [], [], []
+        
+        rhy = rhyme
+        key = keywords
+        if rhyme == "": 
+            for rhyme in RHYME_LIST[1:6]:
+                rhy = rhyme.split()[0]
+                if keywords == "":
+                    for _ in range(3):
+                        tmp_model_output, tmp_ch_position_num = gen_model_input(rhy,\
+                                                                                first_sentence, key,\
+                                                                                hid_sentence, length,\
+                                                                                pattern, selected_index)
+                        model_output.append(tmp_model_output)
+                        ch_position_num.append(tmp_ch_position_num)
+                        keywords_record.append([key])
+                        rhyme_record.append([rhy])
+                else:
+                    tmp_model_output, tmp_ch_position_num = gen_model_input(rhy,\
+                                                                            first_sentence, key,\
+                                                                            hid_sentence, length,\
+                                                                            pattern, selected_index)
+                    model_output.append(tmp_model_output)
+                    ch_position_num.append(tmp_ch_position_num)
+                    keywords_record.append([key])
+                    rhyme_record.append([rhy])
+        else:
+            if keywords == "":
+                for _ in range(3):
+                    tmp_model_output, tmp_ch_position_num = gen_model_input(rhy, first_sentence, key,\
+                                                                        hid_sentence, length, pattern, selected_index)
+                    model_output.append(tmp_model_output)
+                    ch_position_num.append(tmp_ch_position_num)
+                    keywords_record.append([key])
+                    rhyme_record.append([rhy])
+            else:
+                tmp_model_output, tmp_ch_position_num = gen_model_input(rhy, first_sentence, key,\
+                                                                    hid_sentence, length, pattern, selected_index)
+                model_output.append(tmp_model_output)
+                ch_position_num.append(tmp_ch_position_num)
+                keywords_record.append([key])
+                rhyme_record.append([rhy])
+        print (model_output)
+        print('keywords_record', keywords_record)
+        print('rhyme_record', rhyme_record)
+        
+        generated_lyrics = []
+        for mod, ch, key, rhy in list(zip(model_output, ch_position_num, keywords_record, rhyme_record)):
+            generated_lyrics.append(list(zip(mod, ch)) + key + rhy)
+
         print (generated_lyrics)
 
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST,

@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load index %}
 {% block content %}
     <div class="container-fluid content">
         <div class="row">
@@ -20,11 +21,11 @@
                     </div>-->
                     <div class="form-group">
                         <label>發展字(Topic Words): 歌詞會以發展字為基礎生成(Lyrics will be generated based topic words)</label>
-                        <input class="form-control" name="keywords" placeholder="ex. 夜空 星星">
+                        <input class="form-control" name="keywords" placeholder="">
                     </div>
                     <div class="form-group">
                         <label>想隱藏的句子(The sentence you want to embed in the lyrics)</label>
-                        <input class="form-control" name="hidden_sentence" placeholder="ex.我喜歡你">
+                        <input class="form-control" name="hidden_sentence" placeholder="">
                     </div>
                     <div class="form-group">
                         <label>每句句子長度(Length of each sentence)</label>
@@ -53,15 +54,24 @@
                         <p class="card-title">
                             歌詞結果：<br/>
                             {% if generated_lyrics %}
-                                {% for line in generated_lyrics %}
-                                    {% for ch in line.0 %}
-                                        {% if forloop.counter in line.1 %}
-                                            <span style="color: red">{{ch}}</span>
-                                        {% else %}
-                                            {{ch}}
-                                        {% endif %}
+                                {% for lyrics in generated_lyrics %}
+                                    keywords:
+                                    {{lyrics|index:-2}}
+                                    <br>
+                                    rhyme:
+                                    {{lyrics|index:-1}}
+                                    <br>
+                                    {% for line in lyrics|slice:":-2" %}
+                                        {% for ch in line.0 %}
+                                            {% if forloop.counter in line.1 %}
+                                                <span style="color: red">{{ch}}</span>
+                                            {% else %}
+                                                {{ch}}
+                                            {% endif %}
+                                        {% endfor %}
+                                        <br/>
                                     {% endfor %}
-                                    <br/>
+                                    =================================<br/>
                                 {% endfor %}
                             {% else %}
                                 目前尚無歌詞
