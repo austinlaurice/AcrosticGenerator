@@ -253,7 +253,8 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                                                                                .replace('麵', '面')
                                                                                .replace('鞦天', '秋天')
                                                                                .replace('鞦色', '秋色')
-                                                                               .replace('颱', '台'))
+                                                                               .replace('颱', '台')
+                                                                               .replace('纔', '才'))
         #generated_lyrics.append(''.join(output_format))
         input_sentence = sentence_now
     return generated_lyrics, ch_position_num
@@ -261,12 +262,14 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
+        rhyme_num = int(req.POST['rhyme'])
         rhyme = RHYME_LIST[int(req.POST['rhyme'])].split(' ')[0]
         #first_sentence = req.POST['first_sentence'] if req.POST['first_sentence']!='' else None
         first_sentence = None
         keywords = req.POST['keywords']
         hid_sentence = req.POST['hidden_sentence'] if req.POST['hidden_sentence'] else None
         length = req.POST['length'] if req.POST['length'] != '' else None
+        length_set = length
         pattern = req.POST['pattern']
         if pattern == '3':
             selected_index = req.POST['selected_index']
@@ -283,12 +286,15 @@ def lyrics(req):
         
         generated_lyrics = list(zip(model_output, ch_position_num))
         print (generated_lyrics)
-
+        print (keywords)
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST,
                                           # TODO: Frontend, only condition left
                                           'generated_lyrics': generated_lyrics,
                                           'hidden_sentence': hid_sentence,
-                                          'rhyme': rhyme})
+                                          'rhyme': rhyme,
+                                          'rhyme_num': rhyme_num,
+                                          'topic': keywords,
+                                          'length_set': length_set})
 
     elif req.method == 'GET':
         #generate_sentence('SOS 夜 空 真 美 EOS 1 1 你 || || u || 5')
