@@ -96,6 +96,31 @@ def gen_first_sentence(keywords=None):
         counter = Counter(match)
         return counter.most_common(1)[0][0].strip()
 
+def isLegalSentence(original_input_sentence, sentence_now):
+    if sentence_now == None:
+        return False
+    input_lyric = ['SOS'] + original_input_sentence.split() + ['EOS']
+    input_lyric_bigrams = [tuple(input_lyric[i:i+2]) for i in range(len(input_lyric)-2)]
+    output_lyric = ['SOS'] + sentence_now.split() + ['EOS']
+    output_lyric_bigrams = [tuple(output_lyric[i:i+2]) for i in range(len(output_lyric)-2)]
+    print('input_bigram', input_lyric_bigrams)
+    print('output_bigram', output_lyric_bigrams)
+    # same bigram should not appear over 2 times in a sentence
+    print('output_counter', Counter(output_lyric_bigrams).most_common(5))
+    print('total_counter', Counter(output_lyric_bigrams + input_lyric_bigrams).most_common(5))
+    if len(input_lyric) > 4 and len(output_lyric) > 4:
+        if input_lyric[:4] == output_lyric[:4]:
+            return False
+        if input_lyric[-4:] == output_lyric[-4:]:
+            return False
+    if Counter(output_lyric_bigrams).most_common(1)[0][1] > 2:
+        return False
+    if Counter(input_lyric_bigrams + output_lyric_bigrams).most_common(1)[0][1] > 3:
+        return False
+    if len(set(input_lyric_bigrams) & set(output_lyric_bigrams)) / len(set(output_lyric_bigrams)) > 0.3:
+        return False
+    
+    return True
 
 def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, pattern, selected_index):
     # basic test, should be removed.
@@ -200,69 +225,92 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     input_sentence = ''
     sentence_now = ''
     for row_num, length_row in enumerate(length):
-        if row_num == 0:
-            if zero_sentence:
-                condition_count = 0
-                if len(ch_position[row_num]) != 0:
-                    condition = ''
-                    for c, p in ch_position[row_num]:
-                        condition = condition + str(c) + ' ' + p + ' '
-                        condition_count += 1
-                    condition = str(condition_count) + ' ' + condition
+            if row_num == 0:
+                if zero_sentence:
+                    condition_count = 0
+                    if len(ch_position[row_num]) != 0:
+                        condition = ''
+                        for c, p in ch_position[row_num]:
+                            condition = condition + str(c) + ' ' + p + ' '
+                            condition_count += 1
+                        condition = str(condition_count) + ' ' + condition
+                    else:
+                        condition = '0 '
+                    input_sentence = 'SOS ' + zero_sentence + ' EOS ' + condition + '|| || ' + \
+                                     rhyme + ' || ' + str(length_row)
+                    #SOS 心 疼 你 还 没 挣 脱 思 念 的 囚 禁 EOS 2 11 后 1 他 || r p r m m v v v v f f d v v || u || 14,SOS 他 在 你 一 段 难 忘 远 行 最 后 却 离 去 EOS
+                    # TODO
+                    # model need to be called by here
+                    sentence_now = generate_sentence(input_sentence)
+                    #sentence_now = generate_sentence(input_sentence)
                 else:
-                    condition = '0 '
-                input_sentence = 'SOS ' + zero_sentence + ' EOS ' + condition + '|| || ' + \
-                                 rhyme + ' || ' + str(length_row)
-                #SOS 心 疼 你 还 没 挣 脱 思 念 的 囚 禁 EOS 2 11 后 1 他 || r p r m m v v v v f f d v v || u || 14,SOS 他 在 你 一 段 难 忘 远 行 最 后 却 离 去 EOS
-                # TODO
-                # model need to be called by here
-                sentence_now = generate_sentence(input_sentence)
-                #sentence_now = generate_sentence(input_sentence)
+                    sentence_now = first_sentence
             else:
-                sentence_now = first_sentence
-        else:
-            condition_count = 0
-            if len(ch_position[row_num]) != 0:
-                condition = ''
-                for c, p in ch_position[row_num]:
-                    condition = condition + str(c) + ' ' + p + ' '
-                    condition_count += 1
-                condition = str(condition_count) + ' ' + condition
-            else:
-                condition = '0 '
-            input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + '|| || ' + \
-                             rhyme + ' || ' + str(length_row)
-            # TODO
-            # model need to be called by here
-            #if not zero_sentence and row_num == 1:
-            #    sentence_now = generate_sentence(input_sentence)
-            sentence_now = generate_sentence(input_sentence)
-        #print (input_sentence)
-        print (sentence_now)
-        output_format = sentence_now.split(' ')
-        #for position in ch_position[row_num]:
-        #    try:
-        #        output_format[position[0]-1] = position[1]
-        #    except IndexError:
-        #        print ('Generated sentence is defferent from the condition.')
-        #        continue
-        generated_lyrics.append(HanziConv.toTraditional(''.join(output_format)).replace('隻', '只')
-                                                                               .replace('迴憶', '回憶')
-                                                                               .replace('瞭', '了')
-                                                                               .replace('傢', '家')
-                                                                               .replace('麵', '面')
-                                                                               .replace('鞦天', '秋天')
-                                                                               .replace('鞦色', '秋色')
-                                                                               .replace('颱', '台')
-                                                                               .replace('纔', '才'))
-        #generated_lyrics.append(''.join(output_format))
-        input_sentence = sentence_now
+                illegal = True
+                padded_sentence_index = row_num
+                print("="*80)
+                original_input_sentence = input_sentence
+                while illegal and padded_sentence_index >= 0:
+                    condition_count = 0
+                    if len(ch_position[row_num]) != 0:
+                        condition = ''
+                        for c, p in ch_position[row_num]:
+                            condition = condition + str(c) + ' ' + p + ' '
+                            condition_count += 1
+                        condition = str(condition_count) + ' ' + condition
+                    else:
+                        condition = '0 '
+                    new_input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + '|| || ' + \
+                                     rhyme + ' || ' + str(length_row)
+                    # TODO
+                    # model need to be called by here
+                    #if not zero_sentence and row_num == 1:
+                    #    sentence_now = generate_sentence(input_sentence)
+                    sentence_now = generate_sentence(new_input_sentence)
+                    print('sentence_now', sentence_now)
+                    print('row_num', row_num)
+
+                    if not isLegalSentence(original_input_sentence, sentence_now):
+                        print("ILLEGAL!!!!!!!!!!!")
+                        padded_sentence_index = min(padded_sentence_index, len(generated_lyrics)-1)
+                        padded_sentence_index -= 1
+                        if row_num == 1 or padded_sentence_index == -1:
+                            input_sentence = zero_sentence + ' ' + input_sentence
+                        else:
+                            input_sentence = ' '.join(list(HanziConv.toSimplified(generated_lyrics[padded_sentence_index]))) + ' ' + input_sentence
+                    else:
+                        illegal = False
+                    print(input_sentence)
+
+                
+
+
+            print (sentence_now)
+            output_format = sentence_now.split(' ')
+            #for position in ch_position[row_num]:
+            #    try:
+            #        output_format[position[0]-1] = position[1]
+            #    except IndexError:
+            #        print ('Generated sentence is defferent from the condition.')
+            #        continue
+            
+            generated_lyrics.append(HanziConv.toTraditional(''.join(output_format)).replace('隻', '只')
+                                                                                   .replace('迴憶', '回憶')
+                                                                                   .replace('瞭', '了')
+                                                                                   .replace('傢', '家')
+                                                                                   .replace('麵', '面')
+                                                                                   .replace('鞦天', '秋天')
+                                                                                   .replace('鞦色', '秋色')
+                                                                                   .replace('颱', '台')
+                                                                                   .replace('纔', '才')
+                                                                                   .replace('齣', '出'))
+            #generated_lyrics.append(''.join(output_format))
+            input_sentence = sentence_now
     return generated_lyrics, ch_position_num
 
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
-        rhyme_num = int(req.POST['rhyme'])
         rhyme = RHYME_LIST[int(req.POST['rhyme'])].split(' ')[0]
         #first_sentence = req.POST['first_sentence'] if req.POST['first_sentence']!='' else None
         first_sentence = None
@@ -270,7 +318,6 @@ def lyrics(req):
         print('keywords', keywords)
         hid_sentence = req.POST['hidden_sentence'] if req.POST['hidden_sentence'] else None
         length = req.POST['length'] if req.POST['length'] != '' else None
-        length_set = length
         pattern = req.POST['pattern']
         if pattern == '3':
             selected_index = req.POST['selected_index']
@@ -332,15 +379,12 @@ def lyrics(req):
             generated_lyrics.append(list(zip(mod, ch)) + key + rhy)
 
         print (generated_lyrics)
-        print (keywords)
+
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST,
                                           # TODO: Frontend, only condition left
                                           'generated_lyrics': generated_lyrics,
                                           'hidden_sentence': hid_sentence,
-                                          'rhyme': rhyme,
-                                          'rhyme_num': rhyme_num,
-                                          'topic': keywords,
-                                          'length_set': length_set})
+                                          'rhyme': rhyme})
 
     elif req.method == 'GET':
         #generate_sentence('SOS 夜 空 真 美 EOS 1 1 你 || || u || 5')
