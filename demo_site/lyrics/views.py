@@ -34,6 +34,9 @@ child = pexpect.spawn(' '.join(cmd), encoding='utf-8')
 # not a good method, but I haven't thought of a better way to read multi-line output from child.
 child.expect('\n>', timeout=200)
 
+with open('/tmp2/Laurice/transformer/Lyrics_demo/pos_table.pkl', 'rb') as f:
+    POS_LEN_TABLE = pickle.load(f)
+
 def generate_sentence(input_sentence):
     print (input_sentence)
     child.sendline(input_sentence)
@@ -155,6 +158,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     ch_position = []
     ch_position_num = []
     if pattern == '0': #first character of each sentence
+        length = [random.randint(6, 16) for _ in range(len(hid_sentence))]
         for ch in hid_sentence:
             ch_position.append([(1, ch)])
             ch_position_num.append([1])
@@ -224,6 +228,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     generated_lyrics = []
     input_sentence = ''
     sentence_now = ''
+    #import ipdb; ipdb.set_trace()
     for row_num, length_row in enumerate(length):
             if row_num == 0:
                 if zero_sentence:
@@ -250,6 +255,8 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                 padded_sentence_index = row_num
                 print("="*80)
                 original_input_sentence = input_sentence
+                count = 0
+                pos_string = ''
                 while illegal and padded_sentence_index >= 0:
                     condition_count = 0
                     if len(ch_position[row_num]) != 0:
@@ -260,8 +267,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                         condition = str(condition_count) + ' ' + condition
                     else:
                         condition = '0 '
-                    new_input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + '|| || ' + \
-                                     rhyme + ' || ' + str(length_row)
+                    new_input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + '|| ' + pos_string +\
+                                         ' || ' + rhyme + ' || ' + str(length_row)
+                    print ('pos_string', pos_string)
                     # TODO
                     # model need to be called by here
                     #if not zero_sentence and row_num == 1:
@@ -269,20 +277,21 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                     sentence_now = generate_sentence(new_input_sentence)
                     print('sentence_now', sentence_now)
                     print('row_num', row_num)
-
+                    
                     if not isLegalSentence(original_input_sentence, sentence_now):
                         print("ILLEGAL!!!!!!!!!!!")
-                        padded_sentence_index = min(padded_sentence_index, len(generated_lyrics)-1)
-                        padded_sentence_index -= 1
-                        if row_num == 1 or padded_sentence_index == -1:
-                            input_sentence = zero_sentence + ' ' + input_sentence
-                        else:
-                            input_sentence = ' '.join(list(HanziConv.toSimplified(generated_lyrics[padded_sentence_index]))) + ' ' + input_sentence
+                        pos_string = POS_LEN_TABLE[int(length_row)][count]
+                        count += 1
+                        #padded_sentence_index = min(padded_sentence_index, len(generated_lyrics)-1)
+                        #padded_sentence_index -= 1
+                        #if row_num == 1 or padded_sentence_index == -1:
+                        #    input_sentence = zero_sentence + ' ' + input_sentence
+                        #else:
+                        #    input_sentence = ' '.join(list(HanziConv.toSimplified(generated_lyrics[padded_sentence_index]))) + ' ' + input_sentence
                     else:
                         illegal = False
                     print(input_sentence)
 
-                
 
 
             print (sentence_now)
@@ -303,7 +312,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                                                                                    .replace('鞦色', '秋色')
                                                                                    .replace('颱', '台')
                                                                                    .replace('纔', '才')
-                                                                                   .replace('齣', '出'))
+                                                                                   .replace('齣', '出')
+                                                                                   .replace('纍了', '累了')
+                                                                                   .replace('紮', '扎'))
             #generated_lyrics.append(''.join(output_format))
             input_sentence = sentence_now
     return generated_lyrics, ch_position_num
@@ -327,12 +338,12 @@ def lyrics(req):
         if length != None:
             length = re.sub('[^0-9;]','', length)
             length = length.strip(';').split(';')
-        
+
         model_output, ch_position_num, keywords_record, rhyme_record = [], [], [], []
-        
+
         rhy = rhyme
         key = keywords
-        if rhyme == "": 
+        if rhyme == "":
             for rhyme in RHYME_LIST[1:6]:
                 rhy = rhyme.split()[0]
                 if keywords == "":
