@@ -158,7 +158,8 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     ch_position = []
     ch_position_num = []
     if pattern == '0': #first character of each sentence
-        length = [random.randint(6, 16) for _ in range(len(hid_sentence))]
+        if not length:
+            length = [random.randint(6, 16) for _ in range(len(hid_sentence))]
         for ch in hid_sentence:
             ch_position.append([(1, ch)])
             ch_position_num.append([1])
@@ -257,6 +258,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                 original_input_sentence = input_sentence
                 count = 0
                 pos_string = ''
+                if(random.random()>0.6):
+                    index = random.randint(0, len(POS_LEN_TABLE(length_row))-1)
+                    pos_string = POS_LEN_TABLE[int(length_row)][index]
                 while illegal and padded_sentence_index >= 0:
                     condition_count = 0
                     if len(ch_position[row_num]) != 0:
@@ -280,8 +284,14 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                     
                     if not isLegalSentence(original_input_sentence, sentence_now):
                         print("ILLEGAL!!!!!!!!!!!")
-                        pos_string = POS_LEN_TABLE[int(length_row)][count]
-                        count += 1
+                        if (count >= 10):
+                            break
+                        try:
+                            index = random.randint(0, len(POS_LEN_TABLE(length_row))-1)
+                            pos_string = POS_LEN_TABLE[int(length_row)][index]
+                            count += 1
+                        except:
+                            break
                         #padded_sentence_index = min(padded_sentence_index, len(generated_lyrics)-1)
                         #padded_sentence_index -= 1
                         #if row_num == 1 or padded_sentence_index == -1:
