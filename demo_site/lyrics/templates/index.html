@@ -54,24 +54,15 @@
                         <p class="card-title">
                             Result：<br/>
                             {% if generated_lyrics %}
-                                {% for lyrics in generated_lyrics %}
-                                    keywords:
-                                    {{lyrics|index:-2}}
-                                    <br>
-                                    rhyme:
-                                    {{lyrics|index:-1}}
-                                    <br>
-                                    {% for line in lyrics|slice:":-2" %}
-                                        {% for ch in line.0 %}
-                                            {% if forloop.counter in line.1 %}
-                                                <span style="color: red">{{ch}}</span>
-                                            {% else %}
-                                                {{ch}}
-                                            {% endif %}
-                                        {% endfor %}
-                                        <br/>
+                                {% for line in generated_lyrics %}
+                                    {% for ch in line.0 %}
+                                        {% if forloop.counter in line.1 %}
+                                            <span style="color: red">{{ch}}</span>
+                                        {% else %}
+                                            {{ch}}
+                                        {% endif %}
                                     {% endfor %}
-                                    =================================<br/>
+                                    <br/>
                                 {% endfor %}
                             {% else %}
                                 There's no result for now.
