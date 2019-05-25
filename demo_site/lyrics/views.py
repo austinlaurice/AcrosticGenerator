@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from .misc import RHYME_LIST
+from .forms import PostForm
 import random
 from collections import defaultdict, Counter
 import re
@@ -156,7 +157,7 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
     ch_position_num = []
     if pattern == '0': #first character of each sentence
         if not length:
-            length = [random.randint(6, 16) for _ in range(len(hid_sentence))]
+            length = [random.randint(6, 12) for _ in range(len(hid_sentence))]
         for ch in hid_sentence:
             ch_position.append([(1, ch)])
             ch_position_num.append([1])
@@ -166,7 +167,7 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
                 ch_position.append([(int(position), ch)])
                 ch_position_num.append([int(position)])
         else:
-            length = [random.randint(6, 16) for _ in range(len(hid_sentence))]
+            length = [random.randint(6, 12) for _ in range(len(hid_sentence))]
             for position, ch in zip(length, hid_sentence):
                 ch_position.append([(int(position), ch)])
                 ch_position_num.append([int(position)])
@@ -178,7 +179,7 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
                 ch_position_num.append([position])
                 position += 1
         else:
-            length = [x+1+random.randint(2, 10) for x in range(len(hid_sentence))]
+            length = [x+1+random.randint(2, 6) for x in range(len(hid_sentence))]
             for ch in hid_sentence:
                 ch_position.append([(position, ch)])
                 ch_position_num.append([position])
@@ -286,6 +287,7 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
                             pos_string = random.choice(POS_LEN_TABLE[int(length_row)])
                             retry_count += 1
                         except:
+                            ipdb.set_trace()
                             break
                 else:
                     illegal = False
@@ -314,13 +316,22 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
-        rhyme = RHYME_LIST[int(req.POST['rhyme'])].split(' ')[0]
-        keywords = req.POST['keywords']
+        form = PostForm(req.POST or None)
+        if form.is_valid():
+            rhyme = form.cleaned_data['rhyme']
+            keywords = form.cleaned_data['keywords']
+            hidden_sentence = form.cleaned_data['hidden_sentence']
+            length = form.cleaned_data['length']
+            pattern = form.cleaned_data['pattern']
+        if int(rhyme) == 0:   # random a rhyme if not given
+            rhyme = random.choice(RHYME_LIST[1:])[1].split(' ')[0]
+        else:
+            rhyme = RHYME_LIST[int(rhyme)][1].split(' ')[0]
+        
         if keywords.strip() == '':
             keywords = None
-        hid_sentence = req.POST['hidden_sentence'] if req.POST['hidden_sentence'] else None
-        length = req.POST['length'] if req.POST['length'] != '' else None
-        pattern = req.POST['pattern']
+        hid_sentence = hidden_sentence if hidden_sentence else None
+        length = length if length != '' else None
         if pattern == '3':
             selected_index = req.POST['selected_index']
         else:
@@ -342,11 +353,13 @@ def lyrics(req):
                                           # TODO: Frontend, only condition left
                                           'generated_lyrics': generated_lyrics,
                                           'hidden_sentence': hid_sentence,
-                                          'rhyme': rhyme})
+                                          'rhyme': rhyme,
+                                          'form': form})
 
     elif req.method == 'GET':
+        form = PostForm()
         #generate_sentence('SOS 夜 空 真 美 EOS 1 1 你 || || u || 5')
         #child.expect(['\n>', pexpect.EOF, pexpect.TIMEOUT])
-        return render(req, 'index.html', {'rhyme_list': RHYME_LIST})
+        return render(req, 'index.html', {'rhyme_list': RHYME_LIST, 'form': form})
 
 

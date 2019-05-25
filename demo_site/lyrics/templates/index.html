@@ -9,27 +9,33 @@
                     {% csrf_token %} 
                     <div class="form-group">
                         <label>Rhyme:</label>
+                        {{ form.rhyme }}
+                        <!--
                         <select class="form-control" name="rhyme">
                             {% for rhyme in rhyme_list %}
                             <option value={{ forloop.counter0 }}>{{ rhyme }}</option>
                             {% endfor %}
                         </select>
+                        -->
                     </div>
                     <!--<div class="form-group" >
                         <label>第一句(The first sentence you want)</label>
                         <input class="form-control" name="first_sentence" placeholder="ex.你是我眼中的星星">
                     </div>-->
                     <div class="form-group">
-                        <label>Theme of topic: Lyrics will be generated based topic words</label>
-                        <input class="form-control" name="keywords" value="{{topic}}">
+                        <label>Theme of topic: Lyrics will be generated based on topic words</label>
+                        <!--<input class="form-control" name="keywords" value={{form.keywords}}>-->
+                        {{form.keywords}}
                     </div>
                     <div class="form-group">
                         <label>The sequence of tokens to be hidden in lyrics (Must provide input)</label>
-                        <input class="form-control" name="hidden_sentence" value="{{hidden_sentence}}">
+                        <!--<input class="form-control" name="hidden_sentence" value="{{hidden_sentence}}">-->
+                        {{form.hidden_sentence}}
                     </div>
                     <div class="form-group">
                         <label>Lengths of the first to the last sentences</label>
-                        <input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length_set}}">
+                        <!--<input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length}}">-->
+                        {{form.length}}
                     </div>
                     <div class="form-group">
                         <label>Hidden Pattern</label>
