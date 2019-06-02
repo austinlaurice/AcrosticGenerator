@@ -8,7 +8,11 @@ function tableCreate(divID){
     tbl.classList.add('table-bordered');
     var tblbody = document.createElement('tbody');
     //var sentence_len_str = document.getElementById('length').value;
-    var sentence_len_str = document.getElementById('length').value;
+    var sentence_len_str = document.getElementById('length').value.trim();
+    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(10);
+    if (sentence_len_str == '') {
+        sentence_len_str = tmp.join(';');
+    }
     console.log(sentence_len_str);
     if (sentence_len_str != ''){
         var sentence_len = sentence_len_str.split(';');
@@ -50,13 +54,13 @@ function tableCreate(divID){
         // tbl border attribute to 
     }
     else{
-    // generate 6 * 15 slots (?) if not said
+    // generate 6 * 10 slots (?) if not said
         for (var j=0; j<6; j++){
             // generate form according to the conditions
             // need to have row & col index for each slot
             var row = document.createElement('tr');
 
-            for (var i=0; i<15; i++) {
+            for (var i=0; i<10; i++) {
                 // create element <td> and text node
                 // Make text node the contents of <td> element
                 // put <td> at end of the table row
@@ -93,17 +97,77 @@ function tableCreate(divID){
 }
 
 // Draw the table when "Draw it myself" is selected
-function tableShow(divID, element){
-    if (element.value == 3){
+/*function tableShow(divID){
+    console.log(document.getElementsByTagName('table'));
+    if (document.getElementsByTagName('table').length == 0) {
         tableCreate(divID);
     }
     else{
-        var clearElement = document.getElementById(divID);
-        clearElement.innerHTML = '';
+        //var clearElement = document.getElementById(divID);
+        //clearElement.innerHTML = '';
+        document.getElementById(divID).innerHTML = '';
+        tableCreate(divID);
         coloredForm = new Array();
         var update_index = document.getElementById('selected_index');
         update_index.value='';
     }
+    changeSlotColor();
+}*/
+
+function tableShow(divID) {
+    if (document.getElementsByTagName('table').length == 0) {
+        tableCreate(divID);
+    }
+    else{
+        //var clearElement = document.getElementById(divID);
+        //clearElement.innerHTML = '';
+        document.getElementById(divID).innerHTML = '';
+        tableCreate(divID);
+        coloredForm = new Array();
+    }
+    changeSlotColor();
+    var pattern = document.getElementById('pattern').value;
+    var sentence_len_str = document.getElementById('length').value.trim();
+    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(10);
+    if (sentence_len_str == '') {
+        sentence_len_str = tmp.join(';');
+    }
+    var sentence_len = sentence_len_str.split(';');
+
+    selected = new Array();
+    if (pattern == '0') {
+        for (var i = 0; i < sentence_len.length; i++) {
+            selected.push(''.concat(i.toString(), '_', '0'));
+        }
+    }
+    else if (pattern == '1') {
+        for (var i = 0; i < sentence_len.length; i++) {
+            console.log(sentence_len[i]-1);
+            selected.push(''.concat(i.toString(), '_', sentence_len[i]-1));
+        }
+    }
+    else if (pattern == '2') {
+        for (var i = 0; i < sentence_len.length; i++) {
+            selected.push(''.concat(i.toString(), '_', i.toString()));
+        }
+    }
+    else if (pattern == '3') {
+        selected = document.getElementById('selected_index').value.split(' ');
+        console.log(selected);
+    }
+    for (var i = 0; i < selected.length; i++) {
+        var r = selected[i].split('_')[0];
+        var c = selected[i].split('_')[1];
+        document.getElementsByTagName('table')[0].rows[r].cells[c].style.backgroundColor = '#AAAAAA';
+    }
+
+}
+
+function clearPattern(divID) {
+    document.getElementById('selected_index').value = '';
+    document.getElementById(divID).innerHTML = '';
+    tableCreate(divID);
+    coloredForm = new Array();
     changeSlotColor();
 }
 

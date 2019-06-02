@@ -127,7 +127,7 @@ def isLegalSentence(original_input_sentence, sentence_now):
     
     return True
 
-def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_index):
+def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_index):
     # basic test, should be removed.
     # tmp = generate_sentence('SOS 好 難 搞 EOS 3 1 還 2 真 3 的 || || u || 6')
     # 我現在才認真看你的範例句哈哈哈哈，笑死我了XDDD
@@ -139,9 +139,9 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
     line_count = 6
     zero_sentence = None
     # Need to decide how many lines first
-    hid_sentence = HanziConv.toSimplified(hid_sentence)
-    if (pattern == '0' or pattern == '1') and hid_sentence != None:
-        line_count = len(hid_sentence)
+    hidden_sentence = HanziConv.toSimplified(hidden_sentence)
+    if (pattern == '0' or pattern == '1') and hidden_sentence != None:
+        line_count = len(hidden_sentence)
     elif length != None:
         line_count = len(length)
     if keywords:
@@ -157,30 +157,30 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
     ch_position_num = []
     if pattern == '0': #first character of each sentence
         if not length:
-            length = [random.randint(6, 12) for _ in range(len(hid_sentence))]
-        for ch in hid_sentence:
+            length = [random.randint(6, 12) for _ in range(len(hidden_sentence))]
+        for ch in hidden_sentence:
             ch_position.append([(1, ch)])
             ch_position_num.append([1])
     elif pattern == '1': #last character of each sentence
         if length:
-            for position, ch in zip(length, hid_sentence):
+            for position, ch in zip(length, hidden_sentence):
                 ch_position.append([(int(position), ch)])
                 ch_position_num.append([int(position)])
         else:
-            length = [random.randint(6, 12) for _ in range(len(hid_sentence))]
-            for position, ch in zip(length, hid_sentence):
+            length = [random.randint(6, 12) for _ in range(len(hidden_sentence))]
+            for position, ch in zip(length, hidden_sentence):
                 ch_position.append([(int(position), ch)])
                 ch_position_num.append([int(position)])
     elif pattern == '2':
         position = 1
         if length:
-            for ch in hid_sentence:
+            for ch in hidden_sentence:
                 ch_position.append([(position, ch)])
                 ch_position_num.append([position])
                 position += 1
         else:
-            length = [x+1+random.randint(2, 6) for x in range(len(hid_sentence))]
-            for ch in hid_sentence:
+            length = [x+1+random.randint(2, 6) for x in range(len(hidden_sentence))]
+            for ch in hidden_sentence:
                 ch_position.append([(position, ch)])
                 ch_position_num.append([position])
                 position += 1
@@ -188,7 +188,7 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
         # selected_index 0_0 1_0 1_1 need to plus one for col index
         selected_index = selected_index.strip().split(' ')
         selected_index = [ind.split('_') for ind in selected_index]
-        index_word_bind = list(zip(selected_index, hid_sentence))
+        index_word_bind = list(zip(selected_index, hidden_sentence))
         selected_position = defaultdict(list)
         for index, word in index_word_bind:
             row, col = index
@@ -222,7 +222,7 @@ def gen_model_input(rhyme, keywords, hid_sentence, length, pattern, selected_ind
                 ch_position.append(ch_row)
                 ch_position_num.append(ch_row_num)
 
-    # ch_position = [[row0], [row1], ....]; rhyme = 'u'; length = [11, 12, 13]; hid_sentence = '你好'
+    # ch_position = [[row0], [row1], ....]; rhyme = 'u'; length = [11, 12, 13]; hidden_sentence = '你好'
     # generate first sentence if there's zero sentence
     generated_lyrics = []
     input_sentence = ''
@@ -320,8 +320,12 @@ def lyrics(req):
         if form.is_valid():
             rhyme = form.cleaned_data['rhyme']
             keywords = form.cleaned_data['keywords']
-            hidden_sentence = form.cleaned_data['hidden_sentence']
+            hidden_sentence = form.cleaned_data['hidden_sentence'].strip().replace(' ', '')
+            if form.cleaned_data['length'].strip() == '':
+                form.cleaned_data['length'] = ';'.join(['10']*len(hidden_sentence))
             length = form.cleaned_data['length']
+            print(length)
+            
             pattern = form.cleaned_data['pattern']
         if int(rhyme) == 0:   # random a rhyme if not given
             rhyme = random.choice(RHYME_LIST[1:])[1].split(' ')[0]
@@ -329,32 +333,37 @@ def lyrics(req):
             rhyme = RHYME_LIST[int(rhyme)][1].split(' ')[0]
         
         if keywords.strip() == '':
-            keywords = None
-        hid_sentence = hidden_sentence if hidden_sentence else None
-        length = length if length != '' else None
+            keywords = hidden_sentence
+
         if pattern == '3':
             selected_index = req.POST['selected_index']
         else:
             selected_index = None
-        if length != None:
+
+        if length.strip() == '':
+            length = [10] * len(hidden_sentence)
+        else:
             length = re.sub('[^0-9;]','', length)
             length = length.strip(';').split(';')
+        print(length)
+        print(hidden_sentence)
 
 
         model_output, ch_position_num = gen_model_input(rhyme, keywords,\
-                                                        hid_sentence, length,\
+                                                        hidden_sentence, length,\
                                                         pattern, selected_index)
 
         generated_lyrics = list(zip(model_output, ch_position_num))
 
         print (generated_lyrics)
 
-        return render(req, 'index.html', {'rhyme_list': RHYME_LIST,
+        return render(req, 'index.html', {'rhyme_list'      : RHYME_LIST,
                                           # TODO: Frontend, only condition left
                                           'generated_lyrics': generated_lyrics,
-                                          'hidden_sentence': hid_sentence,
-                                          'rhyme': rhyme,
-                                          'form': form})
+                                          'hidden_sentence' : hidden_sentence,
+                                          'rhyme'           : rhyme,
+                                          'form'            : form,
+                                          'selected_index'  : selected_index})
 
     elif req.method == 'GET':
         form = PostForm()

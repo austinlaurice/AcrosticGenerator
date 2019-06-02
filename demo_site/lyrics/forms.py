@@ -24,8 +24,10 @@ class PostForm(forms.Form):
                             max_length=100,
                             widget=forms.TextInput(
                                 attrs={
-                                    'size': 100,
-                                    'class':'form-control'
+                                    'size'  : 100,
+                                    'class' : 'form-control',
+                                    'id'    : 'hidden_sentence',
+                                    'onchange': 'tableShow(\'pattern_define\')',
                                 }
                             )
                       )
@@ -38,33 +40,35 @@ class PostForm(forms.Form):
                                     'size'        : 100,
                                     'class'       : 'form-control',
                                     'placeholder' : 'ex.15;10;3;18;12',
-                                    'id'          : 'length'
+                                    'id'          : 'length',
+                                    'onchange': 'tableShow(\'pattern_define\')',
                                 }
                             )
                       )
-    pattern         = forms.CharField(
-                            max_length=100,
-                            widget=forms.TextInput(
+
+    pattern         = forms.ChoiceField(
+                            choices=[
+                                (0, 'First character of each sentence'),
+                                (1, 'Last character of each sentence'),
+                                (2, 'Diagonal line'),
+                                (3, 'Draw it by myself')
+                            ],
+                            widget=forms.Select(
                                 attrs={
-                                    'size': 100,
-                                    'class':'form-control'
+                                    'class'     : 'form-control',
+                                    'onchange'  : 'tableShow(\'pattern_define\')',
+                                    'id'        : 'pattern'
+                                    #'onchange': 'tableShow(\'pattern_define\', pattern, \'pattern\')',
                                 }
                             )
                       )
-    #pattern         = forms.ChoiceField(
-    #                        choices=[
-    #                            (0, 'First character of each sentence'),
-    #                            (1, 'Last character of each sentence'),
-    #                            (2, 'Diagonal line'),
-    #                            (3, 'Draw it by myself')
-    #                        ],
-    #                        widget=forms.Select(
-    #                            attrs={
-    #                                'class':'form-control'
-    #                            }
-    #                        )
-    #                  )
-    
-    
-    
-    
+
+    selected_index  = forms.CharField(
+                            max_length=100,
+                            required=False,
+                            widget=forms.HiddenInput(
+                                attrs={
+                                    'id'          : 'selected_index'
+                                }
+                            )
+                      )
