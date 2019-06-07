@@ -298,6 +298,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
+        # Need to require lock first
         lock = Locker_en.objects.all()[0]
         while(lock.is_using == True):
             lock = Locker_en.objects.all()[0]
@@ -390,7 +391,6 @@ def lyrics(req):
             generated_lyrics.append(list(zip(mod, ch)) + key + rhy)
 
         print (generated_lyrics)
-
         lock.is_using = False
         lock.save()
 
