@@ -32,6 +32,11 @@
                         <input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length_set}}">
                     </div>
                     <div class="form-group">
+                        <label>Lengths of each words in sentences(Use ";" to separate words in a sentence;
+                        use "||" to separate different sentences)</label>
+                        <input class="form-control" name="length_word" id="length_word" placeholder="ex.4;4;4;4||4;5;6;7" value="{{length_set}}">
+                    </div>
+                    <div class="form-group">
                         <label>Hidden Pattern</label>
                         <select class="form-control" name="pattern" onchange="tableShow('pattern_define', this)">
                             <option value="0">First character of each sentence</option>
@@ -45,7 +50,7 @@
                     <div class="form-group" style="display: none"> 
                         <input class="form-control" name="selected_index" id="selected_index">
                     </div>
-                    <button type="submit" class="btn btn-secondary btn-lg btn-block">提交(Submit)</button>
+                    <button type="submit" class="btn btn-secondary btn-lg btn-block">Submit</button>
                 </form>
             </div>
             <div class="col">
