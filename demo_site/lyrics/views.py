@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from .misc_english import RHYME_LIST
+from .models import Locker
 import random
 from collections import defaultdict, Counter
 import re
@@ -34,15 +35,25 @@ child = pexpect.spawn(' '.join(cmd), encoding='utf-8')
 # not a good method, but I haven't thought of a better way to read multi-line output from child.
 child.expect('\n>', timeout=200)
 
+locks = Locker.objects.all()
+if len(locks) == 0:
+    lock = Locker.objects.create()
+    lock.save()
+if locks[0].is_using == True:
+    locks[0].is_using = False
+    locks[0].save()
+
+
 
 def generate_sentence(input_sentence):
     print (input_sentence)
     child.sendline(input_sentence)
     child.expect(['\n>', pexpect.EOF, pexpect.TIMEOUT])
-    output = re.search(r'INFO.*SOS.*\n', child.before) # parse output
+    #output = re.search(r'INFO.*SOS.*\n', child.before) # parse output
+    output = re.search(r'INFO.*.*\n', child.before) # parse output
     if output:
         sentence_generated = output.group().split(':')[-1]
-        sentence_generated = sentence_generated.strip().replace('SOS ', '').replace(' EOS', '')
+        sentence_generated = sentence_generated.strip().replace('SOS ', '').replace('<EOS>', '')
         return sentence_generated
 
 
@@ -122,7 +133,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     #        keywords = keywords.strip().split(' ')
 
     zero_sentence = first_sentence
-    zero_sentence = ' '.join(zero_sentence.replace(' ', ''))
+    #zero_sentence = ' '.join(zero_sentence.replace(' ', ''))
     #else:
     #    first_sentence = ' '.join(HanziConv.toSimplified(first_sentence).strip())
     # Use pattern to decide the condition of each sentence
@@ -130,8 +141,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     word_position = []
     word_position_num = []
     if pattern == '0': #first character of each sentence
-        length = [random.randint(6, 16) for _ in range(len(hid_sentence.split(' ')))]
-        for word in hid_sentence.split(' '):
+        if not length:
+            length = [random.randint(6, 16) for _ in range(len(hid_sentence))]
+        for word in hid_sentence:
             word_position.append([(1, word)])
             word_position_num.append([1])
     elif pattern == '1': #last character of each sentence
@@ -205,7 +217,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
     for row_num, length_row in enumerate(length):
             length_word_row = ''
             if length_word:
-                length_word_row = ' '.join(length_row[row_num])
+                length_word_row = ' '.join(length_word[row_num])
             if row_num == 0:
                 if zero_sentence:
                     condition_count = 0
@@ -218,7 +230,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                     else:
                         condition = '0 '
 
-                    input_sentence = 'SOS ' + zero_sentence + ' EOS ' + condition + '||  ' + \
+                    input_sentence = zero_sentence+ '<EOS>' + ' ' + condition + '|| ' + \
                                      rhyme + ' || ' + length_word_row + ' || '+ str(length_row)
                     
                     # and it means something special to me 2 7 smiles 6 she || IY1 || 4 2 3 3 4 3 6 4 3 4 2 || 11, look at the way that she smiles when she sees me
@@ -235,7 +247,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                 #count = 0
                 #while illegal and padded_sentence_index >= 0:
                 #    condition_count = 0
-                if len(word_position[row_num]) != 0:
+                if len(word_position) < row_num+1:
+                    condition = '0 '
+                elif len(word_position[row_num]) != 0:
                     condition = ''
                     for c, p in word_position[row_num]:
                         condition = condition + str(c) + ' ' + p + ' '
@@ -243,7 +257,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                     condition = str(condition_count) + ' ' + condition
                 else:
                     condition = '0 '
-                new_input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + '||  ' + \
+                new_input_sentence = input_sentence + ' ' + condition + '|| ' + \
                                      rhyme + ' || ' + length_word_row + ' || '+ str(length_row)
                     # TODO
                     # model need to be called by here
@@ -286,6 +300,11 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
+        lock = Locker.objects.all()[0]
+        while(lock.is_using == True):
+            lock = Locker.objects.all()[0]
+        lock.is_using = True
+        lock.save()
         rhyme = RHYME_LIST[int(req.POST['rhyme'])].split(' ')[0]
         #first_sentence = req.POST['first_sentence'] if req.POST['first_sentence']!='' else None
         #first_sentence = None
@@ -307,6 +326,7 @@ def lyrics(req):
         if length != None:
             length = re.sub('[^0-9;]','', length)
             length = length.strip(';').split(';')
+            print (length)
 
         if length_word != None:
             length_word = re.sub('[^0-9;|]','', length_word)
@@ -364,10 +384,17 @@ def lyrics(req):
         print('rhyme_record', rhyme_record)
         
         generated_lyrics = []
+            
         for mod, ch, key, rhy in list(zip(model_output, ch_position_num, keywords_record, rhyme_record)):
+            #import ipdb; ipdb.set_trace()
+            while(len(mod) > len(ch)):
+                ch.append([])
             generated_lyrics.append(list(zip(mod, ch)) + key + rhy)
 
         print (generated_lyrics)
+
+        lock.is_using = False
+        lock.save()
 
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST,
                                           'generated_lyrics': generated_lyrics,
