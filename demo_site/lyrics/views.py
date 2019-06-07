@@ -1,6 +1,7 @@
 from django.shortcuts import render
+from django.db.utils import OperationalError
 from .misc_english import RHYME_LIST
-from .models import Locker
+from .models import Locker_en
 import random
 from collections import defaultdict, Counter
 import re
@@ -12,8 +13,6 @@ import argparse
 import os
 import pickle
 import pexpect
-from opencc import OpenCC
-from hanziconv import HanziConv
 
 os.environ['CUDA_VISIBLE_DEVICES'] = "2"
 
@@ -35,14 +34,13 @@ child = pexpect.spawn(' '.join(cmd), encoding='utf-8')
 # not a good method, but I haven't thought of a better way to read multi-line output from child.
 child.expect('\n>', timeout=200)
 
-locks = Locker.objects.all()
+locks = Locker_en.objects.all()
 if len(locks) == 0:
-    lock = Locker.objects.create()
+    lock = Locker_en.objects.create()
     lock.save()
-if locks[0].is_using == True:
+elif locks[0].is_using == True:
     locks[0].is_using = False
     locks[0].save()
-
 
 
 def generate_sentence(input_sentence):
@@ -300,9 +298,9 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
-        lock = Locker.objects.all()[0]
+        lock = Locker_en.objects.all()[0]
         while(lock.is_using == True):
-            lock = Locker.objects.all()[0]
+            lock = Locker_en.objects.all()[0]
         lock.is_using = True
         lock.save()
         rhyme = RHYME_LIST[int(req.POST['rhyme'])].split(' ')[0]
