@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from .misc import RHYME_LIST
+from .models import Locker
 import random
 from collections import defaultdict, Counter
 import re
@@ -36,6 +37,16 @@ child.expect('\n>', timeout=200)
 
 with open('/tmp2/Laurice/transformer/Lyrics_demo/pos_table.pkl', 'rb') as f:
     POS_LEN_TABLE = pickle.load(f)
+
+# generate a lock if not exist
+all_locks = Locker.objects.all()
+if len(all_locks) == 0:
+    lock = Locker.objects.create()
+    lock.save()
+if all_locks[0].is_using == True:
+    all_locks[0].is_using = False
+    all_locks[0].objects.save()
+
 
 def generate_sentence(input_sentence):
     print (input_sentence)
@@ -127,11 +138,6 @@ def isLegalSentence(original_input_sentence, sentence_now):
 
 def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, pattern, selected_index):
     # basic test, should be removed.
-    # tmp = generate_sentence('SOS 好 難 搞 EOS 3 1 還 2 真 3 的 || || u || 6')
-    # 我現在才認真看你的範例句哈哈哈哈，笑死我了XDDD
-    # print(tmp)
-    # return [], []
-
 
     # rhyme is already done
     line_count = 6
@@ -259,7 +265,8 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                 count = 0
                 pos_string = ''
                 if(random.random()>0.6):
-                    index = random.randint(0, len(POS_LEN_TABLE(length_row))-1)
+                    #import ipdb; ipdb.set_trace()
+                    index = random.randint(0, len(POS_LEN_TABLE[int(length_row)])-1)
                     pos_string = POS_LEN_TABLE[int(length_row)][index]
                 while illegal and padded_sentence_index >= 0:
                     condition_count = 0
@@ -287,7 +294,7 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
                         if (count >= 10):
                             break
                         try:
-                            index = random.randint(0, len(POS_LEN_TABLE(length_row))-1)
+                            index = random.randint(0, len(POS_LEN_TABLE[int(length_row)])-1)
                             pos_string = POS_LEN_TABLE[int(length_row)][index]
                             count += 1
                         except:
@@ -332,6 +339,12 @@ def gen_model_input(rhyme, first_sentence, keywords, hid_sentence, length, patte
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
+        # Need to require lock first
+        lock = Locker.objects.all()[0]
+        while(lock.is_using == True):
+            lock = Locker.objects.all()[0]
+        lock.is_using = True
+        lock.save()
         rhyme = RHYME_LIST[int(req.POST['rhyme'])].split(' ')[0]
         #first_sentence = req.POST['first_sentence'] if req.POST['first_sentence']!='' else None
         first_sentence = None
@@ -400,6 +413,8 @@ def lyrics(req):
             generated_lyrics.append(list(zip(mod, ch)) + key + rhy)
 
         print (generated_lyrics)
+        lock.is_using = False
+        lock.save()
 
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST,
                                           # TODO: Frontend, only condition left
