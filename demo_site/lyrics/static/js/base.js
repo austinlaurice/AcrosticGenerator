@@ -117,11 +117,14 @@ function tableCreate(divID){
 function tableShow(divID) {
     if (document.getElementsByTagName('table').length == 0) {
         tableCreate(divID);
+        console.log('ha');
+        console.log(document.getElementById('selected_index'));
     }
     else{
         //var clearElement = document.getElementById(divID);
         //clearElement.innerHTML = '';
         document.getElementById(divID).innerHTML = '';
+        document.getElementById('selected_index').value = '';
         tableCreate(divID);
         coloredForm = new Array();
     }
@@ -133,31 +136,39 @@ function tableShow(divID) {
         sentence_len_str = tmp.join(';');
     }
     var sentence_len = sentence_len_str.split(';');
+    if (sentence_len_str.trim().length == 0) {
+        sentence_len = Array();
+    }
 
-    selected = new Array();
+    coloredForm = new Array();
     if (pattern == '0') {
         for (var i = 0; i < sentence_len.length; i++) {
-            selected.push(''.concat(i.toString(), '_', '0'));
+            coloredForm.push(''.concat(i.toString(), '_', '0'));
         }
+        document.getElementById('selected_index').value = coloredForm.join(' ');
     }
     else if (pattern == '1') {
         for (var i = 0; i < sentence_len.length; i++) {
             console.log(sentence_len[i]-1);
-            selected.push(''.concat(i.toString(), '_', sentence_len[i]-1));
+            coloredForm.push(''.concat(i.toString(), '_', sentence_len[i]-1));
         }
+        document.getElementById('selected_index').value = coloredForm.join(' ');
     }
     else if (pattern == '2') {
         for (var i = 0; i < sentence_len.length; i++) {
-            selected.push(''.concat(i.toString(), '_', i.toString()));
+            coloredForm.push(''.concat(i.toString(), '_', i.toString()));
         }
+        document.getElementById('selected_index').value = coloredForm.join(' ');
     }
     else if (pattern == '3') {
-        selected = document.getElementById('selected_index').value.split(' ');
-        console.log(selected);
+        if (document.getElementById('selected_index').value != '') {
+            coloredForm = document.getElementById('selected_index').value.split(' ');
+        }
+        console.log(coloredForm);
     }
-    for (var i = 0; i < selected.length; i++) {
-        var r = selected[i].split('_')[0];
-        var c = selected[i].split('_')[1];
+    for (var i = 0; i < coloredForm.length; i++) {
+        var r = coloredForm[i].split('_')[0];
+        var c = coloredForm[i].split('_')[1];
         document.getElementsByTagName('table')[0].rows[r].cells[c].style.backgroundColor = '#AAAAAA';
     }
 
@@ -175,6 +186,7 @@ function clearPattern(divID) {
 function changeSlotColor(){
     [].forEach.call(document.getElementsByTagName('td'), function(item){
         item.addEventListener('click', function(){
+            document.getElementById('pattern').value = '3';
             // already colored
             var row = item.parentElement.rowIndex;
             var col = item.cellIndex;

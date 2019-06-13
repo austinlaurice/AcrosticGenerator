@@ -155,72 +155,26 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
     # length of each sentence is decided in this section
     ch_position = []
     ch_position_num = []
-    if pattern == '0': #first character of each sentence
-        if not length:
-            length = [random.randint(6, 12) for _ in range(len(hidden_sentence))]
-        for ch in hidden_sentence:
-            ch_position.append([(1, ch)])
-            ch_position_num.append([1])
-    elif pattern == '1': #last character of each sentence
-        if length:
-            for position, ch in zip(length, hidden_sentence):
-                ch_position.append([(int(position), ch)])
-                ch_position_num.append([int(position)])
-        else:
-            length = [random.randint(6, 12) for _ in range(len(hidden_sentence))]
-            for position, ch in zip(length, hidden_sentence):
-                ch_position.append([(int(position), ch)])
-                ch_position_num.append([int(position)])
-    elif pattern == '2':
-        position = 1
-        if length:
-            for ch in hidden_sentence:
-                ch_position.append([(position, ch)])
-                ch_position_num.append([position])
-                position += 1
-        else:
-            length = [x+1+random.randint(2, 6) for x in range(len(hidden_sentence))]
-            for ch in hidden_sentence:
-                ch_position.append([(position, ch)])
-                ch_position_num.append([position])
-                position += 1
-    elif pattern == '3':
-        # selected_index 0_0 1_0 1_1 need to plus one for col index
-        selected_index = selected_index.strip().split(' ')
-        selected_index = [ind.split('_') for ind in selected_index]
-        index_word_bind = list(zip(selected_index, hidden_sentence))
-        selected_position = defaultdict(list)
-        for index, word in index_word_bind:
-            row, col = index
-            selected_position[int(row)].append((int(col)+1, word))
-        if length:
-            ch_count = 0
-            for i in range(len(length)):
-                ch_row = []
-                ch_row_num = []
-                col_word_now = sorted(selected_position[i], key=lambda x: x[0]) if i in selected_position else None
-                if col_word_now:
-                    for col, word in col_word_now:
-                        ch_row.append((col, word))
-                        ch_row_num.append(col)
-                        ch_count += 1
-                ch_position.append(ch_row)
-                ch_position_num.append(ch_row_num)
-        else:
-            length = [15] * 6
-            # 6 * 15
-            ch_count = 0
-            for i in range(len(length)):
-                ch_row = []
-                ch_row_num = []
-                col_word_now = sorted(selected_position[i], key=lambda x: x[0]) if i in selected_position else None
-                if col_word_now:
-                    for col, word in col_word_now:
-                        ch_row.append((col, word))
-                        ch_row_num.append(col)
-                        ch_count += 1
-                ch_position.append(ch_row)
-                ch_position_num.append(ch_row_num)
+    # selected_index 0_0 1_0 1_1 need to plus one for col index
+    selected_index = selected_index.strip().split(' ')
+    selected_index = [ind.split('_') for ind in selected_index]
+    index_word_bind = list(zip(selected_index, hidden_sentence))
+    selected_position = defaultdict(list)
+    for index, word in index_word_bind:
+        row, col = index
+        selected_position[int(row)].append((int(col)+1, word))
+    ch_count = 0
+    for i in range(len(length)):
+        ch_row = []
+        ch_row_num = []
+        col_word_now = sorted(selected_position[i], key=lambda x: x[0]) if i in selected_position else None
+        if col_word_now:
+            for col, word in col_word_now:
+                ch_row.append((col, word))
+                ch_row_num.append(col)
+                ch_count += 1
+        ch_position.append(ch_row)
+        ch_position_num.append(ch_row_num)
 
     # ch_position = [[row0], [row1], ....]; rhyme = 'u'; length = [11, 12, 13]; hidden_sentence = '你好'
     # generate first sentence if there's zero sentence
@@ -335,10 +289,8 @@ def lyrics(req):
         if keywords.strip() == '':
             keywords = hidden_sentence
 
-        if pattern == '3':
-            selected_index = req.POST['selected_index']
-        else:
-            selected_index = None
+        print('selected', req.POST['selected_index'])
+        selected_index = req.POST['selected_index']
 
         if length.strip() == '':
             length = [10] * len(hidden_sentence)
