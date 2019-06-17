@@ -45,7 +45,7 @@ if len(all_locks) == 0:
     lock.save()
 if all_locks[0].is_using == True:
     all_locks[0].is_using = False
-    all_locks[0].objects.save()
+    all_locks[0].save()
 
 def generate_sentence(input_sentence):
     print (input_sentence)
