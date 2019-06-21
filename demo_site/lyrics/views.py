@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from .misc_english import RHYME_LIST
 from .forms import PostForm
+from .models import Locker_en
 import random
 from collections import defaultdict, Counter
 import re
@@ -32,6 +33,16 @@ child = pexpect.spawn(' '.join(cmd), encoding='utf-8')
 # expect the '>' token of t2t-decoder output
 # not a good method, but I haven't thought of a better way to read multi-line output from child.
 child.expect('\n>', timeout=200)
+
+
+locks = Locker_en.objects.all()
+if len(locks) == 0:
+    lock = Locker_en.objects.create()
+    lock.save()
+elif locks[0].is_using == True:
+    locks[0].is_using = False
+    locks[0].save()
+
 
 with open('/tmp2/Laurice/transformer/Lyrics_demo/pos_table.pkl', 'rb') as f:
     POS_LEN_TABLE = pickle.load(f)
@@ -273,7 +284,13 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
 # main page for lyrics demo
 def lyrics(req):
     if req.method == 'POST':
-        print(RHYME_LIST)
+        # Need to require lock first
+        lock = Locker_en.objects.all()[0]
+        while lock.is_using == True:
+            lock = Locker_en.objects.all()[0]
+        lock.is_using = True
+        lock.save()
+
         form = PostForm(req.POST or None)
         if form.is_valid():
             rhyme = form.cleaned_data['rhyme']
@@ -318,6 +335,9 @@ def lyrics(req):
         generated_lyrics = list(zip(model_output, ch_position_num))
 
         print (generated_lyrics)
+
+        lock.is_using = False
+        lock.save()
 
         return render(req, 'index.html', {'generated_lyrics': generated_lyrics,
                                           'rhyme'           : rhyme,
