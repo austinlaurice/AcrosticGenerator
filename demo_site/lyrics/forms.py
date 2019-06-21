@@ -1,5 +1,5 @@
 from django import forms
-from .misc import RHYME_LIST
+from .misc_english import RHYME_LIST
 
 class PostForm(forms.Form):
     rhyme           = forms.ChoiceField(
@@ -42,6 +42,18 @@ class PostForm(forms.Form):
                                     'placeholder' : 'ex.15;10;3;18;12',
                                     'id'          : 'length',
                                     'onchange': 'tableShow(\'pattern_define\')',
+                                }
+                            )
+                      )
+    length_word     = forms.CharField(
+                            max_length=100,
+                            required=False,
+                            widget=forms.TextInput(
+                                attrs={
+                                    'size'        : 100,
+                                    'class'       : 'form-control',
+                                    'placeholder' : 'ex.15;10;3;18;12',
+                                    'id'          : 'length_word'
                                 }
                             )
                       )

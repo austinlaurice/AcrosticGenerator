@@ -10,48 +10,30 @@
                     <div class="form-group">
                         <label>Rhyme:</label>
                         {{ form.rhyme }}
-                        <!--
-                        <select class="form-control" name="rhyme">
-                            {% for rhyme in rhyme_list %}
-                            <option value={{ forloop.counter0 }}>{{ rhyme }}</option>
-                            {% endfor %}
-                        </select>
-                        -->
                     </div>
-                    <!--<div class="form-group" >
-                        <label>第一句(The first sentence you want)</label>
-                        <input class="form-control" name="first_sentence" placeholder="ex.你是我眼中的星星">
-                    </div>-->
                     <div class="form-group">
                         <label>Theme of topic: Lyrics will be generated based on topic words (Optional)</label>
-                        <!--<input class="form-control" name="keywords" value={{form.keywords}}>-->
                         {{form.keywords}}
                     </div>
                     <div class="form-group">
                         <label>The sequence of tokens to be hidden in lyrics (Required)</label>
-                        <!--<input class="form-control" name="hidden_sentence" value="{{hidden_sentence}}">-->
                         {{form.hidden_sentence}}
                     </div>
                     <div class="form-group">
                         <label>Lengths of the first to the last sentences</label>
-                        <!--<input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length}}">-->
                         {{form.length}}
                     </div>
+                    <div class="form-group">
+                        <label>Lengths of each words in sentences(Use ";" to separate words in a sentence;
+                        use "||" to separate different sentences)</label>
+                        {{form.length_word}}
+                    </div>
                     <div class="form-group" style="display: none"> 
-                        <!--<input class="form-control" name="selected_index" id="selected_index">-->
                         {{ form.selected_index }}
                     </div>
                     <div class="form-group">
                         <label>Hidden Pattern</label>
                         {{ form.pattern }}
-                        <!--
-                        <select class="form-control" name="pattern" onchange="tableShow('pattern_define', this)">
-                            <option value="0">First character of each sentence</option>
-                            <option value="1">Last character of each sentence</option>
-                            <option value="2">Diagonal line</option>
-                            <option value="3">Draw it myself</option>
-                        </select>
-                        -->
                     </div>
                     <button type="button" onclick="clearPattern('pattern_define')">Clear Pattern</button>
                     <div class="form-group" name="pattern_define" id="pattern_define">
@@ -87,7 +69,7 @@
                             Conditions set by you：<br/>
                             {% if generated_lyrics %}
                                 The sentence hidden in the lyrics: {{hidden_sentence}} <br/>
-                                Rhyme: {{ rhyme}} <br/>
+                                Rhyme: {{ rhyme }} <br/>
                             {% else %}
                                 There's no condition for now.
                             {% endif %}

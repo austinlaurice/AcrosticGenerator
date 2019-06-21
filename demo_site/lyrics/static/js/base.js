@@ -9,7 +9,12 @@ function tableCreate(divID){
     var tblbody = document.createElement('tbody');
     //var sentence_len_str = document.getElementById('length').value;
     var sentence_len_str = document.getElementById('length').value.trim();
-    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(10);
+    if (document.getElementById('hidden_sentence').value.trim() == '') {
+        var tmp = Array();
+    }
+    else {
+        var tmp = Array(document.getElementById('hidden_sentence').value.split(' ').length).fill(10);
+    }
     if (sentence_len_str == '') {
         sentence_len_str = tmp.join(';');
     }
@@ -117,7 +122,6 @@ function tableCreate(divID){
 function tableShow(divID) {
     if (document.getElementsByTagName('table').length == 0) {
         tableCreate(divID);
-        console.log('ha');
         console.log(document.getElementById('selected_index'));
     }
     else{
@@ -131,7 +135,12 @@ function tableShow(divID) {
     changeSlotColor();
     var pattern = document.getElementById('pattern').value;
     var sentence_len_str = document.getElementById('length').value.trim();
-    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(10);
+    if (document.getElementById('hidden_sentence').value.trim() == '') {
+        var tmp = Array();
+    }
+    else {
+        var tmp = Array(document.getElementById('hidden_sentence').value.split(' ').length).fill(10);
+    }
     if (sentence_len_str == '') {
         sentence_len_str = tmp.join(';');
     }
