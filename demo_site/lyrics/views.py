@@ -205,7 +205,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
             else:
                 length_word_row = ''
 
-            input_sentence = 'SOS ' + zero_sentence + ' EOS ' + condition + '|| || ' + \
+            input_sentence = zero_sentence + ' ' + condition + '|| ' + \
                              rhyme + ' || ' + length_word_row + ' || ' + str(length_row)
             #SOS 心 疼 你 还 没 挣 脱 思 念 的 囚 禁 EOS 2 11 后 1 他 || r p r m m v v v v f f d v v || u || 14,SOS 他 在 你 一 段 难 忘 远 行 最 后 却 离 去 EOS
             # TODO
@@ -237,7 +237,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
             else:
                 length_word_row = ''
 
-            new_input_sentence = 'SOS ' + input_sentence + ' EOS ' + condition + '|| ' +\
+            new_input_sentence = input_sentence + ' ' + condition + '|| ' +\
                                  rhyme + ' || ' + length_word_row + ' || ' + str(length_row)
             # TODO
             # model need to be called by here
@@ -310,7 +310,8 @@ def lyrics(req):
             rhyme = RHYME_LIST[int(rhyme)][1].split(' ')[0]
         
         if keywords.strip() == '':
-            keywords = ' '.join(hidden_sentence)
+            #keywords = ' '.join(hidden_sentence)
+            keywords = 'where should i go'
 
         print('selected', req.POST['selected_index'])
         selected_index = req.POST['selected_index']
@@ -341,7 +342,7 @@ def lyrics(req):
 
         return render(req, 'index.html', {'generated_lyrics': generated_lyrics,
                                           'rhyme'           : rhyme,
-                                          'hidden_sentence' : hidden_sentence,
+                                          'hidden_sentence' : ' '.join(hidden_sentence),
                                           'form'            : form,
                                           'selected_index'  : selected_index})
 
