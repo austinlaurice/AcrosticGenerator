@@ -329,9 +329,12 @@ def lyrics(req):
         print(hidden_sentence)
 
 
-        model_output, ch_position_num = gen_model_input(rhyme, keywords,\
-                                                        hidden_sentence, length,\
-                                                        pattern, selected_index, length_word)
+        try:
+            model_output, ch_position_num = gen_model_input(rhyme, keywords,\
+                                                            hidden_sentence, length,\
+                                                            pattern, selected_index, length_word)
+        except:
+            pass
 
         generated_lyrics = list(zip(model_output, ch_position_num))
 

@@ -27,7 +27,7 @@ class PostForm(forms.Form):
                                     'size'  : 100,
                                     'class' : 'form-control',
                                     'id'    : 'hidden_sentence',
-                                    'onchange': 'tableShow(\'pattern_define\')',
+                                    'onchange': 'tableShow(\'pattern_define\', \'hidden_sentence\')',
                                 }
                             )
                       )
@@ -41,7 +41,7 @@ class PostForm(forms.Form):
                                     'class'       : 'form-control',
                                     'placeholder' : 'ex.15;10;3;18;12',
                                     'id'          : 'length',
-                                    'onchange': 'tableShow(\'pattern_define\')',
+                                    'onchange': 'tableShow(\'pattern_define\', \'length\')',
                                 }
                             )
                       )
@@ -68,7 +68,7 @@ class PostForm(forms.Form):
                             widget=forms.Select(
                                 attrs={
                                     'class'     : 'form-control',
-                                    'onchange'  : 'tableShow(\'pattern_define\')',
+                                    'onchange'  : 'tableShow(\'pattern_define\', \'pattern\')',
                                     'id'        : 'pattern'
                                     #'onchange': 'tableShow(\'pattern_define\', pattern, \'pattern\')',
                                 }

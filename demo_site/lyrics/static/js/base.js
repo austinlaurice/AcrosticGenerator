@@ -119,7 +119,13 @@ function tableCreate(divID){
     changeSlotColor();
 }*/
 
-function tableShow(divID) {
+function tableShow(divID, from_where) {
+    if (from_where == 'hidden_sentence' && (document.getElementById('selected_index').value != '')) {
+        if (document.getElementById('hidden_sentence').value.trim().split(' ').length == 
+                document.getElementById('selected_index').value.split(' ').length) {
+            return
+        }
+    }
     if (document.getElementsByTagName('table').length == 0) {
         tableCreate(divID);
         console.log(document.getElementById('selected_index'));
