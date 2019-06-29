@@ -151,6 +151,8 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
     zero_sentence = gen_first_sentence(keywords).strip()
     # if no keyword then random generate a sentence
     zero_sentence = ' '.join(zero_sentence.replace(' ', ''))
+    #zero_sentence = ' '.join(keywords)
+    print(zero_sentence)
     # Use pattern to decide the condition of each sentence
     # length of each sentence is decided in this section
     ch_position = []
@@ -276,7 +278,7 @@ def lyrics(req):
             keywords = form.cleaned_data['keywords']
             hidden_sentence = form.cleaned_data['hidden_sentence'].strip().replace(' ', '')
             if form.cleaned_data['length'].strip() == '':
-                form.cleaned_data['length'] = ';'.join(['10']*len(hidden_sentence))
+                form.cleaned_data['length'] = ';'.join([str(len(hidden_sentence))]*len(hidden_sentence))
             length = form.cleaned_data['length']
             print(length)
             
@@ -293,7 +295,7 @@ def lyrics(req):
         selected_index = req.POST['selected_index']
 
         if length.strip() == '':
-            length = [10] * len(hidden_sentence)
+            length = [len(hidden_sentence)] * len(hidden_sentence)
         else:
             length = re.sub('[^0-9;]','', length)
             length = length.strip(';').split(';')
@@ -301,13 +303,18 @@ def lyrics(req):
         print(hidden_sentence)
 
 
-        model_output, ch_position_num = gen_model_input(rhyme, keywords,\
-                                                        hidden_sentence, length,\
-                                                        pattern, selected_index)
+        generated_lyrics = []
+        try:
+            model_output, ch_position_num = gen_model_input(rhyme, keywords,\
+                                                            hidden_sentence, length,\
+                                                            pattern, selected_index)
 
-        generated_lyrics = list(zip(model_output, ch_position_num))
+            generated_lyrics = list(zip(model_output, ch_position_num))
 
-        print (generated_lyrics)
+            print (generated_lyrics)
+
+        except:
+            pass
 
         return render(req, 'index.html', {'rhyme_list'      : RHYME_LIST,
                                           # TODO: Frontend, only condition left

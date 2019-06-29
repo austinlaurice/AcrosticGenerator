@@ -9,7 +9,8 @@ function tableCreate(divID){
     var tblbody = document.createElement('tbody');
     //var sentence_len_str = document.getElementById('length').value;
     var sentence_len_str = document.getElementById('length').value.trim();
-    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(10);
+    var fill_len = Math.max(10, document.getElementById('hidden_sentence').value.length);
+    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(fill_len);
     if (sentence_len_str == '') {
         sentence_len_str = tmp.join(';');
     }
@@ -131,7 +132,8 @@ function tableShow(divID) {
     changeSlotColor();
     var pattern = document.getElementById('pattern').value;
     var sentence_len_str = document.getElementById('length').value.trim();
-    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(10);
+    var fill_len = Math.max(10, document.getElementById('hidden_sentence').value.length);
+    var tmp = Array(document.getElementById('hidden_sentence').value.length).fill(fill_len);
     if (sentence_len_str == '') {
         sentence_len_str = tmp.join(';');
     }
