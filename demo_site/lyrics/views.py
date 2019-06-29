@@ -82,14 +82,15 @@ def gen_first_sentence(keywords=None):
 
 # word match method
 def gen_first_sentence(keywords):
-    lyrics_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/data/lyrics_char.txt'
+    lyrics_path = '/tmp2/Laurice/transformer/custom_t2t/rawdata/lyrics_train_english_validation.csv'
     with open(lyrics_path, 'r') as f:
-        lyrics = f.read().replace(' ', '')
+        lyrics = f.read()
         lyric_lines = lyrics.splitlines()
     if keywords == None:
         keywords = []
     else:
-        keywords = ''.join(keywords)
+        #keywords = ''.join(keywords)
+        keywords = keywords.split()
 
     ngram = len(keywords)
     match = []
@@ -98,11 +99,11 @@ def gen_first_sentence(keywords):
             break
         start = 0
         while start+ngram <= len(keywords):
-            word = keywords[start: start+ngram]
+            word = ' '.join(keywords[start: start+ngram])
+            print(word)
             match += re.findall(r'.*'+word+'.*\n', lyrics)
             start += 1
         ngram -= 1
-
     if len(match) == 0:
         rand_id = random.randint(0, len(lyric_lines)-1)
         return lyric_lines[rand_id]
@@ -154,7 +155,9 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
     elif length != None:
         line_count = len(length)
         
+    #print(zero_sentence)
     #zero_sentence = gen_first_sentence(keywords).strip()
+    #print(zero_sentence)
     # if no keyword then random generate a sentence
     #zero_sentence = ' '.join(zero_sentence.replace(' ', ''))
     # Use pattern to decide the condition of each sentence
@@ -297,7 +300,7 @@ def lyrics(req):
             keywords = form.cleaned_data['keywords'].replace(',', '').replace('.', '')
             hidden_sentence = form.cleaned_data['hidden_sentence'].strip().split()
             if form.cleaned_data['length'].strip() == '':
-                form.cleaned_data['length'] = ';'.join(['10']*len(hidden_sentence))
+                form.cleaned_data['length'] = ';'.join([str(len(hidden_sentence))]*len(hidden_sentence))
             length = form.cleaned_data['length']
             length_word = form.cleaned_data['length_word']
             print(length)
@@ -318,7 +321,7 @@ def lyrics(req):
         print('keywords:', keywords)
 
         if length.strip() == '':
-            length = [10] * len(hidden_sentence)
+            length = [len(hidden_sentence)] * len(hidden_sentence)
         else:
             length = re.sub('[^0-9;]','', length)
             length = length.strip(';').split(';')
@@ -328,17 +331,17 @@ def lyrics(req):
         print(length)
         print(hidden_sentence)
 
-
+        generated_lyrics = []
         try:
             model_output, ch_position_num = gen_model_input(rhyme, keywords,\
                                                             hidden_sentence, length,\
                                                             pattern, selected_index, length_word)
+            generated_lyrics = list(zip(model_output, ch_position_num))
+
+            print (generated_lyrics)
         except:
             pass
 
-        generated_lyrics = list(zip(model_output, ch_position_num))
-
-        print (generated_lyrics)
 
         lock.is_using = False
         lock.save()

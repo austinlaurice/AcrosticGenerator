@@ -13,7 +13,8 @@ function tableCreate(divID){
         var tmp = Array();
     }
     else {
-        var tmp = Array(document.getElementById('hidden_sentence').value.split(' ').length).fill(10);
+        var fill_len = Math.max(10, document.getElementById('hidden_sentence').value.split(' ').length);
+        var tmp = Array(document.getElementById('hidden_sentence').value.split(' ').length).fill(fill_len);
     }
     if (sentence_len_str == '') {
         sentence_len_str = tmp.join(';');
@@ -145,7 +146,8 @@ function tableShow(divID, from_where) {
         var tmp = Array();
     }
     else {
-        var tmp = Array(document.getElementById('hidden_sentence').value.split(' ').length).fill(10);
+        var fill_len = Math.max(10, document.getElementById('hidden_sentence').value.trim().split(' ').length);
+        var tmp = Array(document.getElementById('hidden_sentence').value.trim().split(' ').length).fill(fill_len);
     }
     if (sentence_len_str == '') {
         sentence_len_str = tmp.join(';');
