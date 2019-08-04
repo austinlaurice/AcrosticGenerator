@@ -277,8 +277,9 @@ def lyrics(req):
             rhyme = form.cleaned_data['rhyme']
             keywords = form.cleaned_data['keywords']
             hidden_sentence = form.cleaned_data['hidden_sentence'].strip().replace(' ', '')
+            fill_len = max(len(hidden_sentence), 10)
             if form.cleaned_data['length'].strip() == '':
-                form.cleaned_data['length'] = ';'.join([str(len(hidden_sentence))]*len(hidden_sentence))
+                form.cleaned_data['length'] = ';'.join([str(fill_len)]*len(hidden_sentence))
             length = form.cleaned_data['length']
             print(length)
             
@@ -294,11 +295,8 @@ def lyrics(req):
         print('selected', req.POST['selected_index'])
         selected_index = req.POST['selected_index']
 
-        if length.strip() == '':
-            length = [len(hidden_sentence)] * len(hidden_sentence)
-        else:
-            length = re.sub('[^0-9;]','', length)
-            length = length.strip(';').split(';')
+        length = re.sub('[^0-9;]','', length)
+        length = length.strip(';').split(';')
         print(length)
         print(hidden_sentence)
 
