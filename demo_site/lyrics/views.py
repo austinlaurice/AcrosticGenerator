@@ -17,12 +17,12 @@ import pexpect
 os.environ['CUDA_VISIBLE_DEVICES'] = "2"
 
 cmd = ['t2t-decoder',
-       '--t2t_usr_dir=/tmp2/Laurice/transformer/custom_t2t/script',
+       '--t2t_usr_dir=/tmp2/victai/english_v3/custom_t2t/script',
        '--problem=lyrics',
-       '--data_dir=/tmp2/Laurice/transformer/custom_t2t/self_english',
+       '--data_dir=/tmp2/victai/english_v3/custom_t2t/english_data',
        '--model=transformer',
        '--hparams_set=transformer_base_single_gpu',
-       '--output_dir=/tmp2/Laurice/transformer/custom_t2t/train_english',
+       '--output_dir=/tmp2/victai/english_v3/custom_t2t/english_train',
        '--decode_interactive',
        '--worker_gpu_memory_fraction=0.1']
 
@@ -115,6 +115,7 @@ def isLegalSentence(original_input_sentence, sentence_now):
     if sentence_now == None:
         return False
     input_lyric = ['SOS'] + original_input_sentence.split() + ['EOS']
+    print('input_lyric: ', input_lyric)
     input_lyric_bigrams = [tuple(input_lyric[i:i+2]) for i in range(len(input_lyric)-2)]
     output_lyric = ['SOS'] + sentence_now.split() + ['EOS']
     output_lyric_bigrams = [tuple(output_lyric[i:i+2]) for i in range(len(output_lyric)-2)]
@@ -123,7 +124,7 @@ def isLegalSentence(original_input_sentence, sentence_now):
     # same bigram should not appear over 2 times in a sentence
     print('output_counter', Counter(output_lyric_bigrams).most_common(5))
     print('total_counter', Counter(output_lyric_bigrams + input_lyric_bigrams).most_common(5))
-    head_tail_limit = 4
+    head_tail_limit = 2
     if len(input_lyric) > head_tail_limit and len(output_lyric) > head_tail_limit:
         if input_lyric[:head_tail_limit] == output_lyric[:head_tail_limit]:
             return False
@@ -216,7 +217,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
             sentence_now = generate_sentence(input_sentence)
             sentence_now = sentence_now.strip('<EOS>')
         else:
-            '''
+            
             illegal = True
             padded_sentence_index = row_num
             print("="*80)
@@ -225,31 +226,30 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
             pos_string = ''
             while illegal and padded_sentence_index >= 0:
                 condition_count = 0
-            '''
-            if len(ch_position[row_num]) != 0:
-                condition = ''
-                for c, p in ch_position[row_num]:
-                    condition = condition + str(c) + ' ' + p + ' '
-                    condition_count += 1
-                condition = str(condition_count) + ' ' + condition
-            else:
-                condition = ''
+            
+                if len(ch_position[row_num]) != 0:
+                    condition = ''
+                    for c, p in ch_position[row_num]:
+                        condition = condition + str(c) + ' ' + p + ' '
+                        condition_count += 1
+                    condition = str(condition_count) + ' ' + condition
+                else:
+                    condition = ''
 
-            if row_num < len(length_word):
-                length_word_row = ' '.join(length_word[row_num].split(';'))
-            else:
-                length_word_row = ''
+                if row_num < len(length_word):
+                    length_word_row = ' '.join(length_word[row_num].split(';'))
+                else:
+                    length_word_row = ''
 
-            new_input_sentence = input_sentence + ' ' + condition + '|| ' +\
-                                 rhyme + ' || ' + length_word_row + ' || ' + str(length_row)
-            # TODO
-            # model need to be called by here
-            sentence_now = generate_sentence(new_input_sentence)
-            sentence_now = sentence_now.strip('<EOS>')
-            print('sentence_now', sentence_now)
-            print('row_num', row_num)
+                new_input_sentence = input_sentence + ' ' + condition + '|| ' +\
+                                     rhyme + ' || ' + length_word_row + ' || ' + str(length_row)
+                # TODO
+                # model need to be called by here
+                sentence_now = generate_sentence(new_input_sentence)
+                sentence_now = sentence_now.strip('<EOS>')
+                print('sentence_now', sentence_now)
+                print('row_num', row_num)
                 
-            '''
                 if not isLegalSentence(original_input_sentence, sentence_now):
                     print("ILLEGAL!!!!!!!!!!!")
                     if (retry_count >= 5):
@@ -271,8 +271,8 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                             break
                 else:
                     illegal = False
-            '''
-            print('input_sentence:', input_sentence)
+            
+                print('input_sentence:', input_sentence)
 
 
 
@@ -297,8 +297,8 @@ def lyrics(req):
         form = PostForm(req.POST or None)
         if form.is_valid():
             rhyme = form.cleaned_data['rhyme']
-            keywords = form.cleaned_data['keywords'].replace(',', '').replace('.', '')
-            hidden_sentence = form.cleaned_data['hidden_sentence'].strip().split()
+            keywords = form.cleaned_data['keywords'].lower().replace(',', '').replace('.', '')
+            hidden_sentence = form.cleaned_data['hidden_sentence'].lower().strip().split()
             fill_len = max(len(hidden_sentence), 10)
             if form.cleaned_data['length'].strip() == '':
                 form.cleaned_data['length'] = ';'.join([str(fill_len)]*len(hidden_sentence))
