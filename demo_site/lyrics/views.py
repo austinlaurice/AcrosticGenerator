@@ -12,20 +12,18 @@ import argparse
 import os
 import pickle
 import pexpect
+import logging
 from opencc import OpenCC
 from hanziconv import HanziConv
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "2"
-MODEL_BASE_DIR = '/tmp2/Laurice/transformer/custom_t2t'
-DATA_BASE_DIR = '/tmp2/Laurice/transformer/Lyrics_demo'
 
 cmd = ['t2t-decoder',
-       f'--t2t_usr_dir={MODEL_BASE_DIR}/script',
+       f'--t2t_usr_dir={os.environ["Acrostic_TRAIN"]}/script',
        '--problem=lyrics',
-       f'--data_dir={MODEL_BASE_DIR}/self_ch_pos_rhy_len',
+       f'--data_dir={os.environ["Acrostic_TRAIN"]}/chinese_data',
        '--model=transformer',
        '--hparams_set=transformer_base_single_gpu',
-       f'--output_dir={MODEL_BASE_DIR}/train_ch_pos_rhy_len',
+       f'--output_dir={os.environ["Acrostic_TRAIN"]}/chinese_train',
        '--decode_interactive',
        '--worker_gpu_memory_fraction=0.1']
 
@@ -37,8 +35,18 @@ child = pexpect.spawn(' '.join(cmd), encoding='utf-8')
 # not a good method, but I haven't thought of a better way to read multi-line output from child.
 child.expect('\n>', timeout=200)
 
-with open(f'{DATA_BASE_DIR}/pos_table.pkl', 'rb') as f:
+# This is used for some randomness while generating data (NOT necessary)
+# It's POS tagging, which was original used while training.
+with open(f'{os.environ["Acrostic_TRAIN"]}/pos_table.pkl', 'rb') as f:
     POS_LEN_TABLE = pickle.load(f)
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(asctime)s]:\t%(message)s')
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
 
 
 def create_input(content='', position_assign='', rhyme='', POS='', length='', sep='||', SOS='SOS', EOS='EOS'):
@@ -47,7 +55,7 @@ def create_input(content='', position_assign='', rhyme='', POS='', length='', se
 
 
 def generate_sentence(input_sentence):
-    print (input_sentence)
+    logger.info(f'[generate_sentence] input_sentence: {input_sentence}')
     child.sendline(input_sentence)
     child.expect(['\n>', pexpect.EOF, pexpect.TIMEOUT])
     output = re.search(r'INFO.*SOS.*\n', child.before) # parse output
@@ -55,37 +63,6 @@ def generate_sentence(input_sentence):
         sentence_generated = output.group().split(':')[-1]
         sentence_generated = sentence_generated.strip().replace('SOS ', '').replace(' EOS', '')
         return sentence_generated
-
-
-# word match method
-def gen_first_sentence(keywords):
-    lyrics_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/data/lyrics_char.txt'
-    with open(lyrics_path, 'r') as f:
-        lyrics = f.read().replace(' ', '')
-        lyric_lines = lyrics.splitlines()
-    if keywords == None:
-        keywords = []
-    else:
-        keywords = ''.join(keywords)
-
-    ngram = len(keywords)
-    match = []
-    while ngram > 0:
-        if len(match) > 0:
-            break
-        start = 0
-        while start+ngram <= len(keywords):
-            word = keywords[start: start+ngram]
-            match += re.findall(r'.*'+word+'.*\n', lyrics)
-            start += 1
-        ngram -= 1
-
-    if len(match) == 0:
-        rand_id = random.randint(0, len(lyric_lines)-1)
-        return lyric_lines[rand_id]
-    else:
-        counter = Counter(match)
-        return counter.most_common(1)[0][0].strip()
 
 
 def isLegalSentence(original_input_sentence, sentence_now):
@@ -125,9 +102,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
         keywords = HanziConv.toSimplified(keywords)
         keywords = keywords.strip().split(' ')
         
-    # if no keyword then random generate a sentence
-    zero_sentence = ' '.join(gen_first_sentence(keywords).strip().replace(' ', ''))
-    #zero_sentence = ' '.join(hidden_sentence)  # Or use the hidden sentence as zero_sentence
+    zero_sentence = ' '.join(hidden_sentence)  # Use the hidden sentence as zero_sentence
     
     print(zero_sentence)
     # Use pattern to decide the condition of each sentence
@@ -161,6 +136,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
     input_sentence = ''
     sentence_now = ''
     for row_num, length_row in enumerate(length):
+        logger.info(f'row_num: {row_num}')
         if row_num == 0:
             condition_count = 0
             if len(ch_position[row_num]) != 0:
@@ -180,7 +156,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
         else:
             illegal = True
             padded_sentence_index = row_num
-            print("="*80)
+            logger.info("="*80)
             original_input_sentence = input_sentence
             retry_count = 0
             pos_string = ''
@@ -199,11 +175,11 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                                                   rhyme=rhyme,
                                                   length=str(length_row))
                 sentence_now = generate_sentence(new_input_sentence)
-                print('sentence_now', sentence_now)
-                print('row_num', row_num)
+                logger.info(f'sentence_now: {sentence_now}')
+                logger.info(f'row_num: {row_num}')
                 
                 if not isLegalSentence(original_input_sentence, sentence_now):
-                    print("ILLEGAL!!!!!!!!!!!")
+                    logger.info("ILLEGAL!!!!!!!!!!!")
                     if (retry_count >= 5):
                         break
                     if retry_count < 2:
@@ -223,6 +199,9 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                 else:
                     illegal = False
 
+                logger.info(f'input_sentence: {input_sentence}')
+
+        logger.info(f'sentence_now: {sentence_now}')
 
         output_format = sentence_now.split(' ')
         
@@ -265,6 +244,7 @@ def lyrics(req):
         if keywords.strip() == '':
             keywords = hidden_sentence
 
+        logger.info(f"selected: {req.POST['selected_index']}")
         selected_index = req.POST['selected_index']
         length = re.sub('[^0-9;]','', length)
         length = length.strip(';').split(';')
@@ -277,7 +257,7 @@ def lyrics(req):
 
             generated_lyrics = list(zip(model_output, ch_position_num))
 
-            print (generated_lyrics)
+            logger.info(f'generated_lyrics: {generated_lyrics}')
 
         except:
             pass
@@ -292,5 +272,3 @@ def lyrics(req):
     elif req.method == 'GET':
         form = PostForm()
         return render(req, 'index.html', {'rhyme_list': RHYME_LIST, 'form': form})
-
-
