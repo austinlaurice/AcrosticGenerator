@@ -9,41 +9,55 @@
                     {% csrf_token %} 
                     <div class="form-group">
                         <label>Rhyme:</label>
+                        {{ form.rhyme }}
+                        <!--
                         <select class="form-control" name="rhyme">
                             {% for rhyme in rhyme_list %}
                             <option value={{ forloop.counter0 }}>{{ rhyme }}</option>
                             {% endfor %}
                         </select>
+                        -->
                     </div>
                     <!--<div class="form-group" >
                         <label>第一句(The first sentence you want)</label>
                         <input class="form-control" name="first_sentence" placeholder="ex.你是我眼中的星星">
                     </div>-->
                     <div class="form-group">
-                        <label>Theme of topic: Lyrics will be generated based topic words</label>
-                        <input class="form-control" name="keywords" value="{{topic}}">
+                        <label>Theme of topic: Lyrics will be generated based on topic words (Optional)</label>
+                        <!--<input class="form-control" name="keywords" value={{form.keywords}}>-->
+                        {{form.keywords}}
                     </div>
                     <div class="form-group">
-                        <label>The sequence of tokens to be hidden in lyrics (Must provide input)</label>
-                        <input class="form-control" name="hidden_sentence" value="{{hidden_sentence}}">
+                        <label>The sequence of tokens to be hidden in lyrics (Required)</label>
+                        <!--<input class="form-control" name="hidden_sentence" value="{{hidden_sentence}}">-->
+                        {{form.hidden_sentence}}
                     </div>
                     <div class="form-group">
                         <label>Lengths of the first to the last sentences</label>
-                        <input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length_set}}">
+                        <!--<input class="form-control" name="length" id="length" placeholder="ex.15;10;3;18;12" value="{{length}}">-->
+                        {{form.length}}
+                    </div>
+                    <div class="form-group" style="display: none"> 
+                        <!--<input class="form-control" name="selected_index" id="selected_index">-->
+                        {{ form.selected_index }}
                     </div>
                     <div class="form-group">
                         <label>Hidden Pattern</label>
+                        {{ form.pattern }}
+                        <!--
                         <select class="form-control" name="pattern" onchange="tableShow('pattern_define', this)">
                             <option value="0">First character of each sentence</option>
                             <option value="1">Last character of each sentence</option>
                             <option value="2">Diagonal line</option>
                             <option value="3">Draw it myself</option>
                         </select>
+                        -->
                     </div>
+                    <button type="button" onclick="clearPattern('pattern_define')">Clear Pattern</button>
                     <div class="form-group" name="pattern_define" id="pattern_define">
-                    </div>
-                    <div class="form-group" style="display: none"> 
-                        <input class="form-control" name="selected_index" id="selected_index">
+                        <script>
+                            tableShow('pattern_define');
+                        </script>
                     </div>
                     <button type="submit" class="btn btn-secondary btn-lg btn-block">提交(Submit)</button>
                 </form>
@@ -52,26 +66,17 @@
                 <div class="card">
                     <div class="card-body">
                         <p class="card-title">
-                            Result：<br/>
+                            <b>Result：</b><br/>
                             {% if generated_lyrics %}
-                                {% for lyrics in generated_lyrics %}
-                                    keywords:
-                                    {{lyrics|index:-2}}
-                                    <br>
-                                    rhyme:
-                                    {{lyrics|index:-1}}
-                                    <br>
-                                    {% for line in lyrics|slice:":-2" %}
-                                        {% for ch in line.0 %}
-                                            {% if forloop.counter in line.1 %}
-                                                <span style="color: red">{{ch}}</span>
-                                            {% else %}
-                                                {{ch}}
-                                            {% endif %}
-                                        {% endfor %}
-                                        <br/>
+                                {% for line in generated_lyrics %}
+                                    {% for ch in line.0 %}
+                                        {% if forloop.counter in line.1 %}
+                                            <span style="color: red">{{ch}}</span>
+                                        {% else %}
+                                            {{ch}}
+                                        {% endif %}
                                     {% endfor %}
-                                    =================================<br/>
+                                    <br/>
                                 {% endfor %}
                             {% else %}
                                 There's no result for now.
@@ -79,10 +84,11 @@
                         </p>
                         <hr></hr>
                         <p class="card-text">
-                            Conditions set by you：<br/>
+                            <!--Conditions set by you：<br/>-->
                             {% if generated_lyrics %}
-                                The sentence hidden in the lyrics: {{hidden_sentence}} <br/>
-                                Rhyme: {{ rhyme}} <br/>
+                                <b>Sentence hidden in the lyrics: </b><br/>
+                                {{hidden_sentence}} <br/>
+                                <b>Rhyme: </b>{{ rhyme}} <br/>
                             {% else %}
                                 There's no condition for now.
                             {% endif %}

@@ -1,0 +1,12 @@
+1. decoder counting
+2. encoder output
+3. update & reset gate behavior
+
+Rhyme behavior: other information
+POS: with and without attention
+
+embedding size: 300
+hidden layer size: 300
+attention layer size: 300
+5 epochs
+gru
