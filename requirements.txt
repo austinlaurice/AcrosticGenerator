@@ -83,7 +83,7 @@ tfds-nightly==0.0.1.dev201812041738
 tqdm==4.28.1
 traitlets==4.3.2
 uritemplate==3.0.0
-urllib3==1.24.1
+urllib3==1.24.2
 wcwidth==0.1.7
 Werkzeug==0.14.1
 wrapt==1.10.11
