@@ -102,3 +102,7 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# custom_t2t
+./custom_t2t/english_train
+./custom_t2t/english_data

@@ -13,16 +13,15 @@ import argparse
 import os
 import pickle
 import pexpect
-
-os.environ['CUDA_VISIBLE_DEVICES'] = "2"
+import logging
 
 cmd = ['t2t-decoder',
-       '--t2t_usr_dir=/tmp2/victai/english_v3/custom_t2t/script',
+       f'--t2t_usr_dir={os.environ["Acrostic_TRAIN"]}/script',
        '--problem=lyrics',
-       '--data_dir=/tmp2/victai/english_v3/custom_t2t/english_data',
+       f'--data_dir={os.environ["Acrostic_TRAIN"]}/english_data',
        '--model=transformer',
        '--hparams_set=transformer_base_single_gpu',
-       '--output_dir=/tmp2/victai/english_v3/custom_t2t/english_train',
+       f'--output_dir={os.environ["Acrostic_TRAIN"]}/english_train',
        '--decode_interactive',
        '--worker_gpu_memory_fraction=0.1']
 
@@ -44,86 +43,44 @@ elif locks[0].is_using == True:
     locks[0].save()
 
 
-with open('/tmp2/Laurice/transformer/Lyrics_demo/pos_table.pkl', 'rb') as f:
+# This is used for some randomness while generating data (NOT necessary)
+# It's POS tagging, which was original used while training.
+with open(f'{os.environ["Acrostic_TRAIN"]}/pos_table.pkl', 'rb') as f:
     POS_LEN_TABLE = pickle.load(f)
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+formatter = logging.Formatter('[%(asctime)s]:\t%(message)s')
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
+
+def create_input(content='', position_assign='', rhyme='', word_length='', length='', sep='||', SOS='', EOS=''):
+    L = [SOS, content, EOS, position_assign, sep, rhyme, sep, word_length, sep, length]
+    return ' '.join([i for i in L if i is not ''])
+
+
 def generate_sentence(input_sentence):
-    print ('[generate_sentence] input_sentence:', input_sentence)
+    logger.info(f'[generate_sentence] input_sentence: {input_sentence}')
     child.sendline(input_sentence)
     child.expect(['\n>', pexpect.EOF, pexpect.TIMEOUT])
     output = re.search(r'INFO.*\n', child.before) # parse output
-    print('output:', output)
     if output:
         sentence_generated = output.group().split(':')[-1]
         sentence_generated = sentence_generated.strip().replace('SOS ', '').replace(' EOS', '')
         return sentence_generated
 
-'''
-# doc2vec method
-def gen_first_sentence(keywords=None):
-    data_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/d2v/lyrics.txt'
-    model_path = '/tmp2/Laurice/transformer/Lyrics_demo/demo_site/lyrics/d2v/my_doc2vec_model'
-
-    with open(data_path, 'r') as f:
-        documents = [TaggedDocument(doc, [i]) for i, doc in enumerate(f)]
-
-    model = Doc2Vec.load(model_path)
-
-    if keywords is not None and isinstance(keywords, str):
-        # get the sentence with highest prob.
-        vec = model.infer_vector(keywords.strip())
-        sims = model.docvecs.most_similar([vec], topn=1)
-        return documents[sims[0]]
-    else:
-        # get a random sentence from documents
-        rand_id = random.randint(0, len(documents)-1)
-        return documents[rand_id][0]
-'''
-
-# word match method
-def gen_first_sentence(keywords):
-    lyrics_path = '/tmp2/Laurice/transformer/custom_t2t/rawdata/lyrics_train_english_validation.csv'
-    with open(lyrics_path, 'r') as f:
-        lyrics = f.read()
-        lyric_lines = lyrics.splitlines()
-    if keywords == None:
-        keywords = []
-    else:
-        #keywords = ''.join(keywords)
-        keywords = keywords.split()
-
-    ngram = len(keywords)
-    match = []
-    while ngram > 0:
-        if len(match) > 0:
-            break
-        start = 0
-        while start+ngram <= len(keywords):
-            word = ' '.join(keywords[start: start+ngram])
-            print(word)
-            match += re.findall(r'.*'+word+'.*\n', lyrics)
-            start += 1
-        ngram -= 1
-    if len(match) == 0:
-        rand_id = random.randint(0, len(lyric_lines)-1)
-        return lyric_lines[rand_id]
-    else:
-        counter = Counter(match)
-        return counter.most_common(1)[0][0].strip()
 
 def isLegalSentence(original_input_sentence, sentence_now):
     if sentence_now == None:
         return False
     input_lyric = ['SOS'] + original_input_sentence.split() + ['EOS']
-    print('input_lyric: ', input_lyric)
     input_lyric_bigrams = [tuple(input_lyric[i:i+2]) for i in range(len(input_lyric)-2)]
     output_lyric = ['SOS'] + sentence_now.split() + ['EOS']
     output_lyric_bigrams = [tuple(output_lyric[i:i+2]) for i in range(len(output_lyric)-2)]
-    print('input_bigram', input_lyric_bigrams)
-    print('output_bigram', output_lyric_bigrams)
     # same bigram should not appear over 2 times in a sentence
-    print('output_counter', Counter(output_lyric_bigrams).most_common(5))
-    print('total_counter', Counter(output_lyric_bigrams + input_lyric_bigrams).most_common(5))
     head_tail_limit = 2
     if len(input_lyric) > head_tail_limit and len(output_lyric) > head_tail_limit:
         if input_lyric[:head_tail_limit] == output_lyric[:head_tail_limit]:
@@ -139,15 +96,8 @@ def isLegalSentence(original_input_sentence, sentence_now):
     
     return True
 
+
 def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_index, length_word):
-    # basic test, should be removed.
-    # tmp = generate_sentence('SOS 好 難 搞 EOS 3 1 還 2 真 3 的 || || u || 6')
-    # 我現在才認真看你的範例句哈哈哈哈，笑死我了XDDD
-    # print(tmp)
-    # return [], []
-
-
-    # rhyme is already done
     line_count = 6
     zero_sentence = keywords
     # Need to decide how many lines first
@@ -156,11 +106,6 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
     elif length != None:
         line_count = len(length)
         
-    #print(zero_sentence)
-    #zero_sentence = gen_first_sentence(keywords).strip()
-    #print(zero_sentence)
-    # if no keyword then random generate a sentence
-    #zero_sentence = ' '.join(zero_sentence.replace(' ', ''))
     # Use pattern to decide the condition of each sentence
     # length of each sentence is decided in this section
     ch_position = []
@@ -192,7 +137,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
     input_sentence = ''
     sentence_now = ''
     for row_num, length_row in enumerate(length):
-        print('row_num:', row_num)
+        logger.info(f'row_num: {row_num}')
         if row_num == 0:
             condition_count = 0
             if len(ch_position[row_num]) != 0:
@@ -200,7 +145,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                 for c, p in ch_position[row_num]:
                     condition = condition + str(c) + ' ' + p + ' '
                     condition_count += 1
-                condition = str(condition_count) + ' ' + condition
+                condition = str(condition_count) + ' ' + condition.strip()
             else:
                 condition = '0 '
             
@@ -209,18 +154,18 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
             else:
                 length_word_row = ''
 
-            input_sentence = zero_sentence + ' ' + condition + '|| ' + \
-                             rhyme + ' || ' + length_word_row + ' || ' + str(length_row)
-            #SOS 心 疼 你 还 没 挣 脱 思 念 的 囚 禁 EOS 2 11 后 1 他 || r p r m m v v v v f f d v v || u || 14,SOS 他 在 你 一 段 难 忘 远 行 最 后 却 离 去 EOS
-            # TODO
-            # model need to be called by here
+            input_sentence = create_input(content=zero_sentence,
+                                          position_assign=condition,
+                                          rhyme=rhyme,
+                                          word_length=length_word_row,
+                                          length=str(length_row))
+
             sentence_now = generate_sentence(input_sentence)
             sentence_now = sentence_now.strip('<EOS>')
         else:
-            
             illegal = True
             padded_sentence_index = row_num
-            print("="*80)
+            logger.info("="*80)
             original_input_sentence = input_sentence
             retry_count = 0
             pos_string = ''
@@ -232,7 +177,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                     for c, p in ch_position[row_num]:
                         condition = condition + str(c) + ' ' + p + ' '
                         condition_count += 1
-                    condition = str(condition_count) + ' ' + condition
+                    condition = str(condition_count) + ' ' + condition.strip()
                 else:
                     condition = ''
 
@@ -241,17 +186,19 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                 else:
                     length_word_row = ''
 
-                new_input_sentence = input_sentence + ' ' + condition + '|| ' +\
-                                     rhyme + ' || ' + length_word_row + ' || ' + str(length_row)
-                # TODO
-                # model need to be called by here
+                new_input_sentence = create_input(content=input_sentence,
+                                                  position_assign=condition,
+                                                  rhyme=rhyme,
+                                                  word_length=length_word_row,
+                                                  length=str(length_row))
+
                 sentence_now = generate_sentence(new_input_sentence)
                 sentence_now = sentence_now.strip('<EOS>')
-                print('sentence_now', sentence_now)
-                print('row_num', row_num)
+                logger.info(f'sentence_now: {sentence_now}')
+                logger.info(f'row_num: {row_num}')
                 
                 if not isLegalSentence(original_input_sentence, sentence_now):
-                    print("ILLEGAL!!!!!!!!!!!")
+                    logger.info("ILLEGAL!!!!!!!!!!!")
                     if (retry_count >= 5):
                         break
                     if retry_count < 2:
@@ -264,7 +211,7 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                     else:
                         input_sentence = original_input_sentence
                         try:
-                            pos_string = random.choice(POS_LEN_TABLE[int(length_row)])
+                            pos_string = random.choice(POS_LEN_TABLE[int(length_row)]) # add pos control signals to generate different sentence
                             retry_count += 1
                         except:
                             ipdb.set_trace()
@@ -272,17 +219,16 @@ def gen_model_input(rhyme, keywords, hidden_sentence, length, pattern, selected_
                 else:
                     illegal = False
             
-                print('input_sentence:', input_sentence)
+                logger.info(f'input_sentence: {input_sentence}')
 
-
-
-        print ('sentence_now:', sentence_now)
+        logger.info(f'sentence_now: {sentence_now}')
         output_format = sentence_now.split(' ')
         
         generated_lyrics.append(output_format)
                                                        
         input_sentence = sentence_now
     return generated_lyrics, ch_position_num
+
 
 # main page for lyrics demo
 def lyrics(req):
@@ -304,8 +250,6 @@ def lyrics(req):
                 form.cleaned_data['length'] = ';'.join([str(fill_len)]*len(hidden_sentence))
             length = form.cleaned_data['length']
             length_word = form.cleaned_data['length_word']
-            print(length)
-            print('length_word: ', length_word)
             
             pattern = form.cleaned_data['pattern']
         if int(rhyme) == 0:   # random a rhyme if not given
@@ -315,19 +259,17 @@ def lyrics(req):
         
         if keywords.strip() == '':
             #keywords = ' '.join(hidden_sentence)
-            keywords = 'where should i go'
+            keywords = 'what should i do'
 
-        print('selected', req.POST['selected_index'])
+        logger.info(f"selected: {req.POST['selected_index']}")
         selected_index = req.POST['selected_index']
-        print('keywords:', keywords)
+        logger.info(f'keywords: {keywords}')
 
         length = re.sub('[^0-9;]','', length)
         length = length.strip(';').split(';')
         if length_word.strip() != '':
             length_word = re.sub('[^0-9;|]','', length_word)
             length_word = length_word.strip('||').split('||')
-        print(length)
-        print(hidden_sentence)
 
         generated_lyrics = []
         try:
@@ -336,7 +278,7 @@ def lyrics(req):
                                                             pattern, selected_index, length_word)
             generated_lyrics = list(zip(model_output, ch_position_num))
 
-            print (generated_lyrics)
+            logger.info(f'generated_lyrics: {generated_lyrics}')
         except:
             pass
 
@@ -352,8 +294,6 @@ def lyrics(req):
 
     elif req.method == 'GET':
         form = PostForm()
-        #generate_sentence('SOS 夜 空 真 美 EOS 1 1 你 || || u || 5')
-        #child.expect(['\n>', pexpect.EOF, pexpect.TIMEOUT])
         return render(req, 'index.html', {'form': form})
 
 
