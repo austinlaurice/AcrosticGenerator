@@ -1,7 +1,3 @@
----
-title: 'Neural-based Acrostic Generator'
-disqus: hackmd
----
 
 Neural-based Acrostic Generator
 ===
@@ -44,5 +40,3 @@ This is the source code of the demo site in ["Controlling Sequence-to-Sequence M
     abstract = "An acrostic is a form of writing that the first token of each line (or other recurring features in the text) forms a meaningful sequence. In this paper we present a generalized acrostic generation system that can hide certain message in a flexible pattern specified by the users. Different from previous works that focus on rule-based solutions, here we adopt a neural- based sequence-to-sequence model to achieve this goal. Besides acrostic, users are also allowed to specify the rhyme and length of the output sequences. Based on our knowledge, this is the first neural-based natural language generation system that demonstrates the capability of performing micro-level control over output sentences.",
 }
 ```
-
-###### tags: `Templates` `Documentation`
