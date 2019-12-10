@@ -19,7 +19,13 @@ This is the source code of the demo site in ["Controlling Sequence-to-Sequence M
 2. Run train.sh
 
 ## Chinese Examples
-![heart_demo](https://github.com/austinlaurice/Lyrics_demo/blob/master/images/heart_demo.png)
+![heart_demo](/images/heart_demo.png)
+![mountain_demo](/images/mountain.png)
+![dream_demo](/images/dream.png)
+
+## English Examples
+![be_the_change_demo](/images/be_the_change.png)
+![armstrong_demo](/images/armstrong.png)
 
 ## Citation
 ```
