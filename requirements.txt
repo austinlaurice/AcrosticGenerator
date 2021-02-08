@@ -28,7 +28,7 @@ gunicorn==19.9.0
 gym==0.10.9
 h5py==2.8.0
 hanziconv==0.3.2
-httplib2==0.12.0
+httplib2==0.19.0
 idna==2.7
 ipdb==0.11
 ipython==7.2.0
