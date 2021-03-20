@@ -36,7 +36,7 @@ ipython-genutils==0.2.0
 itsdangerous==1.1.0
 jedi==0.13.1
 jieba==0.39
-Jinja2==2.10
+Jinja2==2.11.3
 jmespath==0.9.4
 Keras-Applications==1.0.6
 Keras-Preprocessing==1.0.5
