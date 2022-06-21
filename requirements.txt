@@ -45,7 +45,7 @@ MarkupSafe==1.1.0
 mesh-tensorflow==0.0.4
 mpmath==1.0.0
 nltk==3.4
-numpy==1.15.4
+numpy==1.22.0
 oauth2client==4.1.3
 opencc-python-reimplemented==0.1.4
 parso==0.3.1
